@@ -58,7 +58,9 @@ export class DetectorPipeline {
     let best: FrameFeatures & { indexUV?: UV; tipsUV?: UV[] } = emptyFeatures(t, faceMissing, held);
     let bestP = 0;
     if (geom) {
-      for (const hand of frame.hands) {
+      for (const hand of Array.isArray(frame.hands) ? frame.hands : []) {
+        // MediaPipe always gives 21 points; anything else (e.g. a corrupted recording replayed) is skipped, not fatal.
+        if (!hand || !Array.isArray(hand.landmarks) || hand.landmarks.length < 21) continue;
         const f = extractHandFeatures(t, hand, width, height, geom, held, this.zones, th, this.cfg);
         const p = scoreFrame(f, this.cfg);
         if (!best.hasHand || p > bestP || (p === bestP && f.zone && !best.zone)) { best = f; bestP = p; }
@@ -75,7 +77,7 @@ export class DetectorPipeline {
 
     const { state, events } = temporalStep(
       this.temporal,
-      { t, p: bestP, faceMissing, handMissing: frame.hands.length === 0, isPinch: best.isPinch, zone: best.zone, r: best.r },
+      { t, p: bestP, faceMissing, handMissing: !frame.hands?.length, isPinch: best.isPinch, zone: best.zone, r: best.r },
       this.cfg,
     );
     this.temporal = state;
