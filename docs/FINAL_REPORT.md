@@ -163,7 +163,7 @@ with `supabase db push`.
 - **Reminders:**
   - visual reminder type;
   - volume;
-  - quiet time (5 s–10 min, default 30 s; it was a fixed 5 s that re-reminded about every 10 s);
+  - quiet time (5 s–5 min, default 30 s; it was a fixed 5 s that re-reminded about every 10 s);
   - optional single follow-up;
   - suggestion prompts and supportive text;
   - silent modes no longer notify.

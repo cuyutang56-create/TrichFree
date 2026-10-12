@@ -149,7 +149,7 @@ p();
 p('## Quiet time and alert loops');
 p();
 p('Reminders at 15 fps for different quiet times (the pause after a reminder before another can fire; set in');
-p('Settings → Reminder, 5 s to 10 min, default 30 s).');
+p('Settings → Reminder, 5 s to 5 min, default 30 s).');
 p();
 p(`| Fixture | ${QUIET.map((q) => `${q} s`).join(' | ')} |`);
 p(`|---|${QUIET.map(() => '---').join('|')}|`);

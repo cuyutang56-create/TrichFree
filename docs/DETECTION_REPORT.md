@@ -95,7 +95,7 @@ Reminders produced (first-reminder latency for positives).
 ## Quiet time and alert loops
 
 Reminders at 15 fps for different quiet times (the pause after a reminder before another can fire; set in
-Settings → Reminder, 5 s to 10 min, default 30 s).
+Settings → Reminder, 5 s to 5 min, default 30 s).
 
 | Fixture | 5 s | 15 s | 30 s | 60 s | 120 s |
 |---|---|---|---|---|---|
@@ -116,7 +116,7 @@ turned off).
 
 ## Resource use
 
-- **Detection logic** (pipeline + reminder engine, excluding the ML models): **6.9 µs per frame**
+- **Detection logic** (pipeline + reminder engine, excluding the ML models): **6.5 µs per frame**
   in Node on this machine (2160 frames × 20 repetitions). It is negligible next to the models.
 - **In the browser** (`npm run soak`, 3 min each, 2026-10-12): cloud container: Linux, 4 vCPU Intel Xeon 2.1 GHz, no GPU (WebGL is software-emulated, so the CPU delegate is chosen), headless Chromium 141, fake camera.
   CPU is the sum over all browser processes (100 % = one core); memory is their proportional set size.

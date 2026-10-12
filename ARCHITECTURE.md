@@ -96,7 +96,7 @@ detector behaves.
 
 **Reminder engine** (`src/core/engine.ts`): one episode per reach. Each episode gets a reminder: voice, chime, a
 visual cue, or nothing, if "off" or during the pilot's silent baseline. There is at most one optional follow-up, then
-a quiet time (5 s–10 min, default 30 s) before a new episode can start, so it never loops. Feedback ("Not a pull",
+a quiet time (5 s–5 min, default 30 s) before a new episode can start, so it never loops. Feedback ("Not a pull",
 "I just pulled") comes from the dashboard, the popup, notification buttons and shortcuts.
 
 **Voice recordings are local-first.** They are recorded, trimmed and normalised on the device and stored in

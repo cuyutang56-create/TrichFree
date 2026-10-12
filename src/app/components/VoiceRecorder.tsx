@@ -69,14 +69,21 @@ export function VoiceRecorder({ prompt, clip, onChange }: { prompt: PromptCard; 
 
   const save = async () => {
     if (!pending) return;
-    await db.transaction('rw', db.clips, async () => {
-      const old = await db.clips.where('category').equals(prompt.category).toArray();
-      await db.clips.bulkDelete(old.map((c) => c.id));
-      await db.clips.put({
-        id: uid(), category: prompt.category as ClipCategory, blob: pending.blob, mimeType: 'audio/wav', sourceMimeType: pending.sourceMimeType,
-        durationMs: pending.durationMs, createdAt: Date.now(), playCount: 0, recordedBySomeoneElse: clip?.recordedBySomeoneElse ?? false,
+    try {
+      // One transaction: if storing the new recording fails, the old one is not deleted either.
+      await db.transaction('rw', db.clips, async () => {
+        const old = await db.clips.where('category').equals(prompt.category).toArray();
+        await db.clips.bulkDelete(old.map((c) => c.id));
+        await db.clips.put({
+          id: uid(), category: prompt.category as ClipCategory, blob: pending.blob, mimeType: 'audio/wav', sourceMimeType: pending.sourceMimeType,
+          durationMs: pending.durationMs, createdAt: Date.now(), playCount: 0, recordedBySomeoneElse: clip?.recordedBySomeoneElse ?? false,
+        });
       });
-    });
+    } catch (e) {
+      const full = /quota/i.test(`${(e as Error)?.name} ${(e as Error)?.message} ${(e as { inner?: Error })?.inner?.name ?? ''}`);
+      setMsg(`This recording could not be saved${full ? ': the computer seems to be out of storage space' : ''}. Your earlier recording is unchanged. Free some space, then press Save again.`);
+      return; // keep the preview so the user can try again
+    }
     setPending(null);
     setState('idle');
     setMsg('Saved.');

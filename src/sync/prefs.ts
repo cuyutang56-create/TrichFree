@@ -1,6 +1,6 @@
 // Cross-device preferences: the single source of truth for which settings sync, their defaults and their
 // validation. Mirrors the CHECK constraints of public.user_preferences (supabase/migrations/*_accounts.sql);
-// test/integration/schema.int.test.ts proves both sides accept and reject the same values.
+// test/integration/rls.int.test.ts proves both sides accept and reject the same values.
 // Pure TypeScript: used by the extension service worker, the extension pages and the website.
 import { ALL_ZONES, type Sensitivity, type ZoneId } from '../core/types';
 

@@ -143,7 +143,7 @@ What happened to each finding in this release. The evidence is in the tests name
 | B6 | **Fixed.** Presence-aware: lock stops monitoring; keyboard idle stops it only if nobody was seen for 2 minutes; nobody in view for 10 minutes stops it. | `test/health.test.ts` |
 | B7 | **Fixed.** The popup opens a visible camera-access page when permission is needed; the denied and no-camera states have clear messages. | `e2e/extension.spec.ts` |
 | B8 | **Fixed.** Record, preview, save or discard, replace, delete, test. | `e2e/extension.spec.ts` (voice) |
-| B9 | **Fixed.** Reminder type voice, chime, visual or off; volume; quiet time 5 s–10 min (default 30 s); optional follow-up; suggestion prompts. | `test/engine.test.ts`, `test/evaluate.test.ts` (alert loop) |
+| B9 | **Fixed.** Reminder type voice, chime, visual or off; volume; quiet time 5 s–5 min (default 30 s); optional follow-up; suggestion prompts. | `test/engine.test.ts`, `test/evaluate.test.ts` (alert loop) |
 | B10 | **Fixed.** Verified Singapore helplines and international BFRB organisations (checked 2026-10-12; re-check before launch). | `src/shared/safety.ts` |
 | B11 | **Fixed.** The daily reminder is off by default; companion copy has no guilt or loss framing (guarded by a test). | `test/gamify.test.ts` |
 | B12 | **Fixed.** The frame-rate threshold is configurable; there are 21 browser tests (extension, cross-device, website) plus axe scans. | `e2e/` |
