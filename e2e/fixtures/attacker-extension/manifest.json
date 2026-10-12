@@ -1,0 +1,7 @@
+{
+  "manifest_version": 3,
+  "name": "Bridge attacker (test fixture)",
+  "version": "1.0",
+  "description": "Used only by e2e/bridge-attack.spec.ts: another extension trying to command TrichFree.",
+  "background": { "service_worker": "sw.js" }
+}

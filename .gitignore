@@ -12,4 +12,6 @@ supabase/.temp
 supabase/.branches
 dist-web
 dist-e2e
+dist-e2e-strict
 dist-web-e2e
+.audit-tmp

@@ -27,12 +27,15 @@ const shared = {
   VITE_CONTACT_EMAIL: 'team@example.test',
   VITE_CONFIG_NATIVE_IGNORE_WARNING: 'true',
 };
-const targets = process.argv.slice(2).length ? process.argv.slice(2) : ['extension', 'web'];
+// 'strict' is production-like for the bridge: it trusts only the website origin (no localhost dev bridge).
+const targets = process.argv.slice(2).length ? process.argv.slice(2) : ['extension', 'web', 'strict'];
 for (const t of targets) {
   const args = t === 'web'
     ? ['vite', 'build', '-c', 'vite.web.config.ts', '--outDir', resolve('dist-web-e2e'), '--emptyOutDir']
-    : ['vite', 'build', '--outDir', 'dist-e2e', '--emptyOutDir'];
+    : ['vite', 'build', '--outDir', t === 'strict' ? 'dist-e2e-strict' : 'dist-e2e', '--emptyOutDir'];
+  const env = { ...shared };
+  if (t === 'strict') delete env.VITE_DEV_BRIDGE;
   console.log(`[build-e2e] ${t}: ${args.join(' ')}`);
-  const r = spawnSync('npx', args, { stdio: 'inherit', env: shared });
+  const r = spawnSync('npx', args, { stdio: 'inherit', env });
   if (r.status !== 0) process.exit(r.status ?? 1);
 }
