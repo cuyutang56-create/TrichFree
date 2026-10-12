@@ -16,13 +16,19 @@ export function Preview({ zones }: { zones: Calibration['zones'] }) {
 
   useEffect(() => {
     let stream: MediaStream | null = null;
-    openCamera().then((s) => { stream = s; if (videoRef.current) { videoRef.current.srcObject = s; void videoRef.current.play(); } }).catch(() => {});
+    let closed = false;
+    openCamera().then((s) => {
+      // Closed while the camera was still starting: release it at once instead of leaving it on in the background.
+      if (closed) { s.getTracks().forEach((x) => x.stop()); return; }
+      stream = s;
+      if (videoRef.current) { videoRef.current.srcObject = s; void videoRef.current.play(); }
+    }).catch(() => {});
     getSettings().then(async (s) => setCalib(await activeCalibration(s)));
     const ping = () => send({ target: 'offscreen', type: 'OFF_OVERLAY', on: true });
     ping();
     const t = setInterval(ping, 3000);
     const off = on('ui', (m) => { if (m.type === 'OVERLAY') setLast(m.data); });
-    return () => { clearInterval(t); off(); stream?.getTracks().forEach((x) => x.stop()); send({ target: 'offscreen', type: 'OFF_OVERLAY', on: false }); };
+    return () => { closed = true; clearInterval(t); off(); stream?.getTracks().forEach((x) => x.stop()); send({ target: 'offscreen', type: 'OFF_OVERLAY', on: false }); };
   }, []);
 
   useEffect(() => { if (canvasRef.current) drawOverlay(canvasRef.current, last, zones, calib); }, [last, calib, zones]);

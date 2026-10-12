@@ -48,6 +48,7 @@ export function VoiceRecorder({ prompt, clip, onChange }: { prompt: PromptCard; 
       setState('recording');
     } catch (e) {
       rec.current = null;
+      if ((e as DOMException).name === 'AbortError') return; // left the page while the microphone was starting
       setMsg((e as DOMException).name === 'NotAllowedError'
         ? 'The microphone is blocked for TrichFree. Allow it in the browser’s site settings, then try again.'
         : `The microphone could not start (${(e as Error).message}).`);

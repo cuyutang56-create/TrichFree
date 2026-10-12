@@ -15,10 +15,17 @@ export class ClipRecorder {
   private analyser: AnalyserNode | null = null;
   private raf = 0;
   private timer = 0;
+  private cancelled = false;
   mimeType = '';
 
   async start(onLevel: (rms: number) => void, onAutoStop: () => void) {
-    this.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false } });
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false } });
+    // Cancelled (the page was left) while the microphone was starting: switch it off instead of recording unseen.
+    if (this.cancelled) {
+      stream.getTracks().forEach((t) => t.stop());
+      throw new DOMException('Recording was cancelled', 'AbortError');
+    }
+    this.stream = stream;
     this.mimeType = pickMimeType();
     this.rec = new MediaRecorder(this.stream, this.mimeType ? { mimeType: this.mimeType } : undefined);
     this.chunks = [];
@@ -64,7 +71,7 @@ export class ClipRecorder {
     }
   }
 
-  cancel() { void this.stop().catch(() => {}); }
+  cancel() { this.cancelled = true; void this.stop().catch(() => {}); }
 }
 
 export async function micPermission(): Promise<PermissionState | 'unknown'> {

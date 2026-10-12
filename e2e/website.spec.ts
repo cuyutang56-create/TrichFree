@@ -193,6 +193,27 @@ test('try page: the camera and the on-device detector start in the browser, noth
   await page.close();
 });
 
+test('try page: "Turn camera off" really turns the camera off, including the detector\'s copy of the track', async () => {
+  const page = await browser.newPage();
+  await page.goto(`${BASE}/try/`);
+  // Record every camera track the page creates (getUserMedia results and clones).
+  await page.evaluate(() => {
+    const w = window as unknown as { __tracks: MediaStreamTrack[] };
+    w.__tracks = [];
+    const md = navigator.mediaDevices;
+    const gum = md.getUserMedia.bind(md);
+    md.getUserMedia = async (c?: MediaStreamConstraints) => { const s = await gum(c); w.__tracks.push(...s.getTracks()); return s; };
+    const clone = MediaStreamTrack.prototype.clone;
+    MediaStreamTrack.prototype.clone = function (this: MediaStreamTrack) { const t = clone.call(this); w.__tracks.push(t); return t; };
+  });
+  const live = () => page.evaluate(() => (window as unknown as { __tracks: MediaStreamTrack[] }).__tracks.filter((t) => t.readyState === 'live').length);
+  await page.getByRole('button', { name: 'Turn on camera' }).click();
+  await expect.poll(live).toBe(2); // the preview and the detector's copy
+  await page.getByRole('button', { name: 'Turn camera off' }).click();
+  await expect.poll(live, { timeout: 5000 }).toBe(0);
+  await page.close();
+});
+
 test('web account: sign in with a code, change settings, reflections, export, delete', async () => {
   const email = uniqueEmail('web');
   const page = await browser.newPage({ acceptDownloads: true });

@@ -22,6 +22,7 @@ export const hasTrackProcessor = () => typeof (globalThis as { MediaStreamTrackP
 
 export class VisionClient {
   private worker: Worker;
+  private track: MediaStreamTrack | null = null;
   private fallback: { video: HTMLVideoElement; stop: () => void } | null = null;
   private waiting: (() => void) | null = null;
 
@@ -43,8 +44,12 @@ export class VisionClient {
     });
   }
 
-  /** Feed a camera track to the worker. Frame arrival drives detection. */
+  /**
+   * Feed a camera track to the worker. Frame arrival drives detection. The client owns the track from now on and
+   * stops it in terminate(): pages pass a clone, and a clone left running keeps the camera on after "camera off".
+   */
   attach(track: MediaStreamTrack) {
+    this.track = track;
     if (hasTrackProcessor()) {
       const proc = new MediaStreamTrackProcessor({ track, maxBufferSize: 1 });
       this.worker.postMessage({ type: 'stream', readable: proc.readable } satisfies WorkerIn, [proc.readable as unknown as Transferable]);
@@ -87,6 +92,8 @@ export class VisionClient {
   update(p: { cfg?: DetectorConfig; calib?: Calibration | null; zones?: ZoneId[]; emitFrames?: boolean; model?: PersonalModel | null }) { this.post({ type: 'update', ...p }); }
   terminate() {
     this.fallback?.stop();
+    this.track?.stop();
+    this.track = null;
     this.waiting?.();
     this.post({ type: 'stop' });
     setTimeout(() => this.worker.terminate(), 200);

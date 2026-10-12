@@ -151,6 +151,18 @@ async function attachCamera(): Promise<boolean> {
   }
 }
 
+/** The camera permission was removed (e.g. in the browser's site settings): waiting for the camera will not help. */
+function permissionRemoved(r: Run) {
+  if (r.cameraRetry) { clearInterval(r.cameraRetry.timer); r.cameraRetry = null; }
+  r.error = 'TrichFree needs permission to use the camera. Open TrichFree and allow the camera.';
+  r.errorKind = 'camera_permission';
+  setStatus('error');
+}
+
+async function cameraPermissionDenied(): Promise<boolean> {
+  try { return (await navigator.permissions.query({ name: 'camera' as PermissionName })).state === 'denied'; } catch { return false; }
+}
+
 function onCameraLost(reason: string) {
   const r = run;
   if (!r || r.cameraRetry) return;
@@ -177,9 +189,15 @@ function onCameraLost(reason: string) {
       r.vision = new VisionClient({ cfg: r.cfg, calib, zones: r.settings.zones, emitFrames: true, onMessage: onWorker });
       await attachCamera();
       r.vision?.update({ model: (await getSettings()).personalModel ?? null });
-    } catch { /* still busy */ }
+    } catch (e) {
+      const name = (e as DOMException).name;
+      if (name === 'NotAllowedError' || name === 'SecurityError') permissionRemoved(r);
+      /* otherwise still busy: try again */
+    }
   }, 10_000);
   r.cameraRetry = { until, timer };
+  // A track that ends because the permission was revoked: say so now, not "waiting for the camera" for 5 minutes.
+  void cameraPermissionDenied().then((denied) => { if (denied && run === r) permissionRemoved(r); });
 }
 
 // ---------- worker → engine ----------

@@ -42,6 +42,7 @@ export function Home({ settings, go }: ScreenProps) {
   const cam = useCameraPermission();
   const [toast, flash] = useToast();
   const [busy, setBusy] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [testNote, setTestNote] = useState('');
   const now = useNow(desk.wanted);
   const [lastSession, setLastSession] = useState<SessionRow | null>(null);
@@ -112,10 +113,11 @@ export function Home({ settings, go }: ScreenProps) {
           <dt>Today</dt><dd>{desk.today.detections} reminder{desk.today.detections === 1 ? '' : 's'} · hand came down {desk.today.interrupted} time{desk.today.interrupted === 1 ? '' : 's'}</dd>
         </dl>
         {desk.wanted && (
-          <details className="preview-details">
+          // The preview opens its own camera stream, so it exists only while this panel is open.
+          <details className="preview-details" onToggle={(e) => setPreviewOpen((e.currentTarget as HTMLDetailsElement).open)}>
             <summary>Show what TrichFree sees</summary>
             <p className="small muted">The preview is only on this page and is never saved. Points mark your face and hands; shaded boxes are the areas being watched.</p>
-            <Preview zones={settings.zones} />
+            {previewOpen && <Preview zones={settings.zones} />}
           </details>
         )}
         <div className="row actions">

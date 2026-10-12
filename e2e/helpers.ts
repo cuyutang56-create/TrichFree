@@ -9,8 +9,11 @@ export const DIST = resolve(process.env.E2E_DIST ?? 'dist');
 
 export interface Ext { context: BrowserContext; sw: Worker; extId: string; userDataDir: string; url: (hash?: string) => string }
 
-/** Launch Chromium with the built extension. `camera`: fake device + auto-accept (default), denied, or no device. */
-export async function launch(opts: { userDataDir?: string; camera?: 'fake' | 'denied' | 'none'; dist?: string } = {}): Promise<Ext> {
+/**
+ * Launch Chromium with the built extension. `camera`: fake device + auto-accept (default), denied, no device, or
+ * 'real-permissions' (fake device, real permission state: grant or revoke it with setCameraPermission).
+ */
+export async function launch(opts: { userDataDir?: string; camera?: 'fake' | 'denied' | 'none' | 'real-permissions'; dist?: string } = {}): Promise<Ext> {
   const dist = opts.dist ?? DIST;
   const userDataDir = opts.userDataDir ?? mkdtempSync(join(tmpdir(), 'tf-e2e-'));
   const camera = opts.camera ?? 'fake';
@@ -21,6 +24,7 @@ export async function launch(opts: { userDataDir?: string; camera?: 'fake' | 'de
     ...(camera === 'fake' ? ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] : []),
     ...(camera === 'denied' ? ['--use-fake-device-for-media-stream', '--deny-permission-prompts'] : []),
     ...(camera === 'none' ? ['--use-fake-ui-for-media-stream'] : []),
+    ...(camera === 'real-permissions' ? ['--use-fake-device-for-media-stream'] : []),
   ];
   const context = await chromium.launchPersistentContext(userDataDir, {
     ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : { channel: 'chromium' }),
@@ -65,4 +69,13 @@ export async function signInWithCode(page: Page, email: string, mail: { mailIds:
   const code = await mail.readCode(email, seen);
   await page.getByLabel('6-digit code').fill(code);
   await page.getByRole('button', { name: 'Sign in' }).click();
+}
+
+/**
+ * Grants or revokes the extension's camera permission, as the user would in the browser's site settings.
+ * (The DevTools session stays attached: detaching it discards the override.)
+ */
+export async function setCameraPermission(ext: Ext, page: Page, setting: 'granted' | 'denied') {
+  const cdp = await ext.context.newCDPSession(page);
+  await cdp.send('Browser.setPermission', { permission: { name: 'camera' }, setting, origin: `chrome-extension://${ext.extId}` });
 }
