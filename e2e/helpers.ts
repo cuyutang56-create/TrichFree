@@ -10,12 +10,13 @@ export const DIST = resolve(process.env.E2E_DIST ?? 'dist');
 export interface Ext { context: BrowserContext; sw: Worker; extId: string; userDataDir: string; url: (hash?: string) => string }
 
 /** Launch Chromium with the built extension. `camera`: fake device + auto-accept (default), denied, or no device. */
-export async function launch(opts: { userDataDir?: string; camera?: 'fake' | 'denied' | 'none' } = {}): Promise<Ext> {
+export async function launch(opts: { userDataDir?: string; camera?: 'fake' | 'denied' | 'none'; dist?: string } = {}): Promise<Ext> {
+  const dist = opts.dist ?? DIST;
   const userDataDir = opts.userDataDir ?? mkdtempSync(join(tmpdir(), 'tf-e2e-'));
   const camera = opts.camera ?? 'fake';
   const args = [
-    `--disable-extensions-except=${DIST}`,
-    `--load-extension=${DIST}`,
+    `--disable-extensions-except=${dist}`,
+    `--load-extension=${dist}`,
     '--autoplay-policy=no-user-gesture-required',
     ...(camera === 'fake' ? ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] : []),
     ...(camera === 'denied' ? ['--use-fake-device-for-media-stream', '--deny-permission-prompts'] : []),
@@ -55,3 +56,13 @@ export const deskState = (ext: Ext) =>
   ext.sw.evaluate(async () => (await chrome.storage.local.get('deskState')).deskState as { wanted: boolean; status: string; fps: number; delegate?: string; stopReason?: string; interrupted?: boolean });
 
 export const badge = (ext: Ext) => ext.sw.evaluate(() => chrome.action.getBadgeText({}));
+
+/** Signs in through the UI with a real one-time code read from the local mail catcher (Mailpit). */
+export async function signInWithCode(page: Page, email: string, readCode: (email: string, since: number) => Promise<string>) {
+  await page.getByLabel('Email').fill(email);
+  const since = Date.now();
+  await page.getByRole('button', { name: 'Email me a code' }).click();
+  const code = await readCode(email, since);
+  await page.getByLabel('6-digit code').fill(code);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+}
