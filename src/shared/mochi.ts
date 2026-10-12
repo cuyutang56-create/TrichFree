@@ -21,20 +21,20 @@ const LINES: Record<LineKind, Record<Tone, ((c: Ctx) => string)[]>> = {
       () => "Let's do a little focus time together.",
     ],
   },
+  // The opt-in daily nudge. Playful, never guilt or loss: no "your streak ends", no "you abandoned me".
   reminder: {
     playful: [
-      (c) => `Your ${c.streak}-day streak is looking at me. I'm looking at you. Desk session?`,
-      (c) => `Not to be dramatic, but our ${c.streak}-day streak ends at midnight. Ten minutes. That's all I ask.`,
-      () => "I've been sitting here all day. Squishy. Unbothered. Mildly abandoned.",
-      () => "Ten minutes at your desk keeps the streak alive. I don't make the rules. (I do make the rules.)",
+      (c) => c.streak ? `${c.streak} days of showing up so far. Want company today? I'll bring the squish.` : "Desk session? I'll bring the squish.",
+      () => "I'm on the desk being squishy. Ten minutes together, whenever suits you.",
+      () => "Little focus session? You do the work, I'll do the moral support.",
     ],
     gentle: [
-      (c) => c.streak ? `Ten minutes today keeps your ${c.streak}-day streak going. No pressure.` : 'Got ten minutes? I can keep you company.',
+      (c) => c.streak ? `${c.streak} days of showing up so far. Ten minutes today, if it suits you.` : 'Got ten minutes? I can keep you company.',
       () => "Whenever you're ready, I'm here.",
     ],
   },
   reminderFresh: {
-    playful: [() => "I've been sitting here all day. Squishy. Unbothered. Mildly abandoned. Ten minutes?", () => 'A streak starts with one desk session. I’m just saying. Loudly.'],
+    playful: [() => "I'm on the desk being squishy. Ten minutes together, whenever suits you.", () => 'First session whenever you like. No pressure, just company.'],
     gentle: [() => 'Got ten minutes? I can keep you company.', () => 'Whenever you’re ready, I’m here.'],
   },
   sessionStart: {

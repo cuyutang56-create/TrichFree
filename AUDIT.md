@@ -128,3 +128,44 @@ Backend (optional, pilot only): Supabase, 4 tables insert-only for `anon`, keyed
 **P1 (essential):** cross-device sync with conflict policy; 2-step onboarding; dashboard with monitoring/camera/intervention/account status and Start/Pause/Stop/Test; intervention modes (voice/chime/visual/off), volume, cooldown, follow-up toggle and voice delete/preview; presence-aware idle stop (B6); camera-permission recovery (B7); website, web app, try-it demo and pilot interest form; export and account deletion; deployment configuration; E2E and integration tests; documentation.
 
 **P2 (only after P0/P1):** Mochi refinements, opt-in activity summaries, extra insights, animation polish.
+
+## 12. Resolution (2026-10-12)
+
+What happened to each finding in this release. The evidence is in the tests named, which run in CI.
+
+| # | Resolution | Evidence |
+|---|---|---|
+| B1 | **Fixed.** Accounts (email one-time codes), Postgres with row-level security, cross-device sync with a documented conflict policy, guest mode by default. | `test/integration/*.int.test.ts` (50), `e2e/cross-device.spec.ts` (two independent browser profiles) |
+| B2 | **Fixed.** Website: landing page, privacy policy, `/try/` demo, `/app/` account page, pilot form. Not deployed (needs the team's hosting). | `e2e/website.spec.ts` |
+| B3 | **Fixed.** Onboarding is 2 steps. Voice recording and calibration are optional; the test reminder comes in step 2. | `e2e/extension.spec.ts` (first run) |
+| B4 | **Fixed.** Silent modes never notify. The new "visual" mode is the explicit, quiet notification. | `test/engine.test.ts` |
+| B5 | **Fixed.** "Slow" and "stalled" are separate states, and the slow threshold scales with the target rate. On machines without GPU acceleration the CPU path is used (2.4 → 11–14 fps here). | `test/health.test.ts`, docs/DETECTION_REPORT.md |
+| B6 | **Fixed.** Presence-aware: lock stops monitoring; keyboard idle stops it only if nobody was seen for 2 minutes; nobody in view for 10 minutes stops it. | `test/health.test.ts` |
+| B7 | **Fixed.** The popup opens a visible camera-access page when permission is needed; the denied and no-camera states have clear messages. | `e2e/extension.spec.ts` |
+| B8 | **Fixed.** Record, preview, save or discard, replace, delete, test. | `e2e/extension.spec.ts` (voice) |
+| B9 | **Fixed.** Reminder type voice, chime, visual or off; volume; quiet time 5 s–10 min (default 30 s); optional follow-up; suggestion prompts. | `test/engine.test.ts`, `test/evaluate.test.ts` (alert loop) |
+| B10 | **Fixed.** Verified Singapore helplines and international BFRB organisations (checked 2026-10-12; re-check before launch). | `src/shared/safety.ts` |
+| B11 | **Fixed.** The daily reminder is off by default; companion copy has no guilt or loss framing (guarded by a test). | `test/gamify.test.ts` |
+| B12 | **Fixed.** The frame-rate threshold is configurable; there are 21 browser tests (extension, cross-device, website) plus axe scans. | `e2e/` |
+| B13 | **Fixed.** The version comes from `package.json`. | `src/shared/config.ts` |
+| S1 | **Fixed.** An allowlist of issued codes, checked by a security-definer function. The codes are now long and random (`TF-XXXX-XXXX`, about 39 bits) so they cannot be guessed. | `test/integration/rls.int.test.ts`, `test/pilot.test.ts` |
+| S2 | **Fixed.** `default-src 'self'` and a full directive set for the extension; a strict CSP and security headers for the website, exercised by the browser tests. | `test/privacy.test.ts`, `test/manifest.test.ts`, `e2e/website.spec.ts` |
+| S3 | **Fixed.** `npm audit fix`; 0 vulnerabilities. | `npm audit` |
+| S4 | **Partly fixed.** Imported settings are migrated and validated (invalid preference values dropped); other tables are restored as-is. The import is local, user-initiated and limited to known tables. | `test/settings.test.ts` |
+| S5 | Fixed with B4. | — |
+| S6 | **Still true** (no secrets in the repository or its history, re-checked). | SECURITY.md |
+| S7 | **Fixed.** The listing, permission justifications and privacy policy are rewritten for the current product. | `store/` |
+| S8 | **Open (accepted).** Deleting uploaded pilot rows still goes through the team, because rows are pseudonymous and keyed by code, not by account. The runbook is in DEPLOYMENT.md. | — |
+| S9 | Kept, and extended: no web-accessible resources; the manifest environment is tested. | `test/privacy.test.ts` |
+
+Found during the work (not in the original audit), all fixed:
+- the pilot upsert needed a SELECT policy, so every upload would have failed;
+- a browser relaunch could wipe "monitoring was on";
+- a stale heartbeat alarm could reopen the camera;
+- at about 3 fps no reach was ever caught, plus three related timing bugs;
+- builds configured through `.env` files had their backend blocked by the extension's CSP;
+- keyboard shortcuts were never assigned;
+- the website's social preview image was missing;
+- the extension did not show changes from another device until its 15-minute sync.
+
+Details are in the commit history and DECISIONS.md.

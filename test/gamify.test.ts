@@ -55,6 +55,15 @@ describe('Mochi', () => {
     expect(mochiSays('afterPull', 'playful')).toBe(mochiSays('afterPull', 'gentle'));
   });
   it('fills in the streak', () => {
-    expect(mochiSays('reminder', 'playful', { streak: 7 }, 0)).toContain('7-day');
+    expect(mochiSays('reminder', 'playful', { streak: 7 }, 0)).toContain('7 days');
+  });
+  it('the daily nudge never uses guilt or loss ("your streak ends", "abandoned")', () => {
+    for (const tone of ['playful', 'gentle'] as const) {
+      for (const kind of ['reminder', 'reminderFresh'] as const) {
+        for (let seed = 0; seed < 6; seed++) {
+          for (const streak of [0, 7]) expect(mochiSays(kind, tone, { streak }, seed)).not.toMatch(/\bends?\b|alive|abandon|\blose\b|\blost\b|break the|miss(ed)? (a|the|your) day|dramatic/i);
+        }
+      }
+    }
   });
 });
