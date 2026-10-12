@@ -13,7 +13,7 @@ function supabase(): SupabaseClient | null {
   return client;
 }
 
-/** True when rows should be queued: a participant has consented, sharing is on, and a backend is configured. */
+/** True when rows should be queued and sent: a participant has consented, sharing is on, and a backend is configured. */
 export async function sharingEnabled(d: TrichFreeDB = db): Promise<{ on: boolean; code?: string }> {
   const s = await getSettings(d);
   return { on: telemetryConfigured && !!s.participantCode && s.pilotConsent && s.pilotSharing, code: s.participantCode };
@@ -51,6 +51,9 @@ export async function flush(d: TrichFreeDB = db): Promise<{ sent: number; failed
   flushing = true;
   let sent = 0, failed = 0;
   try {
+    // Switching sharing off stops sending at once: rows still queued (offline backlog, the last minute's rows)
+    // stay on this computer and are sent only if the participant switches sharing back on.
+    if (!(await sharingEnabled(d)).on) return { sent, failed };
     const now = Date.now();
     const due = (await d.uploadQueue.toArray()).filter((r) => r.nextAttemptAt <= now).slice(0, 500);
     const byTable = new Map<UploadTable, UploadRow[]>();
