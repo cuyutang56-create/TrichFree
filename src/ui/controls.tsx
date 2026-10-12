@@ -1,17 +1,25 @@
 // Small accessible form controls shared by the extension and the website.
 // Radio groups use real <input type="radio"> elements, so arrow keys, screen readers and forms work natively.
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+
+/** Shows a new choice immediately, before the saved value comes back (settings are saved asynchronously). */
+function useOptimistic<T>(value: T): [T, (v: T) => void] {
+  const [local, setLocal] = useState(value);
+  useEffect(() => setLocal(value), [value]);
+  return [local, setLocal];
+}
 
 export function Seg<T extends string>({ label, value, options, onChange, hideLabel = false }: {
   label: string; value: T; options: [T, string][]; onChange: (v: T) => void; hideLabel?: boolean;
 }) {
   const name = useId();
+  const [cur, setCur] = useOptimistic(value);
   return (
     <fieldset className="seg" aria-label={hideLabel ? label : undefined}>
       {!hideLabel && <legend className="visually-hidden">{label}</legend>}
       {options.map(([v, text]) => (
         <label key={v}>
-          <input type="radio" name={name} value={v} checked={value === v} onChange={() => onChange(v)} />
+          <input type="radio" name={name} value={v} checked={cur === v} onChange={() => { setCur(v); onChange(v); }} />
           {text}
         </label>
       ))}
@@ -23,12 +31,13 @@ export function Choices<T extends string>({ legend, value, options, onChange, de
   legend: string; value: T; options: { value: T; title: string; desc?: string }[]; onChange: (v: T) => void; describedBy?: string;
 }) {
   const name = useId();
+  const [cur, setCur] = useOptimistic(value);
   return (
     <fieldset className="choices" aria-describedby={describedBy}>
       <legend className="visually-hidden">{legend}</legend>
       {options.map((o) => (
         <label className="choice" key={o.value}>
-          <input type="radio" name={name} value={o.value} checked={value === o.value} onChange={() => onChange(o.value)} />
+          <input type="radio" name={name} value={o.value} checked={cur === o.value} onChange={() => { setCur(o.value); onChange(o.value); }} />
           <span><span className="choice-title">{o.title}</span>{o.desc && <span className="choice-desc">{o.desc}</span>}</span>
         </label>
       ))}
@@ -38,11 +47,12 @@ export function Choices<T extends string>({ legend, value, options, onChange, de
 
 export function Switch({ label, hint, checked, onChange, disabled }: { label: string; hint?: string; checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   const id = useId();
+  const [cur, setCur] = useOptimistic(checked);
   return (
     <label className="switch" htmlFor={id}>
       <span className="switch-text"><span>{label}</span>{hint && <small id={`${id}-hint`}>{hint}</small>}</span>
-      <input id={id} type="checkbox" role="switch" checked={checked} disabled={disabled} aria-describedby={hint ? `${id}-hint` : undefined}
-        onChange={(e) => onChange(e.target.checked)} />
+      <input id={id} type="checkbox" role="switch" checked={cur} disabled={disabled} aria-describedby={hint ? `${id}-hint` : undefined}
+        onChange={(e) => { setCur(e.target.checked); onChange(e.target.checked); }} />
     </label>
   );
 }

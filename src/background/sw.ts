@@ -253,7 +253,9 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'heartbeat') {
     if (!d.wanted) return;
     if (!(await hasOffscreen())) {
-      // Chrome closed the document (e.g. AUDIO_PLAYBACK idle timeout): recreate it.
+      // A heartbeat long ago means the browser was closed in between: never restart the camera silently.
+      if (Date.now() - (d.lastHeartbeat ?? 0) > 2 * 60_000) { await recoverAfterRestart(); return; }
+      // Chrome closed the document mid-session (e.g. AUDIO_PLAYBACK idle timeout): recreate it.
       await ensureOffscreen();
       return;
     }
@@ -340,19 +342,37 @@ chrome.runtime.onMessageExternal.addListener((msg: unknown, sender, reply) => {
 
 void initAccount();
 
-chrome.runtime.onInstalled.addListener(async (details) => {
-  await chrome.storage.local.set({ deskState: INITIAL_DESK });
+/** After a browser restart or an extension update/reload, the camera is off. Remember that monitoring was on so
+ *  the dashboard can say why it stopped, but never restart the camera silently. */
+async function recoverAfterRestart() {
+  await chrome.alarms.clear('heartbeat');
+  await chrome.alarms.clear('autostop');
+  await chrome.alarms.clear('resume');
+  const d = await readDesk();
+  const wasOn = d.wanted || d.status === 'paused';
+  await chrome.storage.local.set({ deskState: { ...INITIAL_DESK, today: d.today, ...(wasOn ? { interrupted: true, stopReason: 'restart' } : { stopReason: d.stopReason }) } });
   await renderBadge(INITIAL_DESK);
+}
+
+chrome.runtime.onInstalled.addListener(async (details) => {
+  // Some launchers (e.g. --load-extension) report "install" again for an existing profile: if state exists,
+  // treat it like a restart rather than a fresh install.
+  const existing = (await chrome.storage.local.get('deskState')).deskState;
+  if (details.reason === 'install' && !existing) {
+    await chrome.storage.local.set({ deskState: INITIAL_DESK });
+    await renderBadge(INITIAL_DESK);
+  } else {
+    await recoverAfterRestart();
+  }
   await scheduleReminder();
   await initAccount();
   if (await hasSession()) await chrome.alarms.create(SYNC_ALARM, { periodInMinutes: SYNC_EVERY_MIN });
-  if (details.reason === 'install') await openApp();
+  if (details.reason === 'install' && !(await getSettings()).onboarded) await openApp();
 });
 
 // Chrome restarted while desk mode was on: never restart the camera silently; the dashboard offers a restart.
 chrome.runtime.onStartup.addListener(async () => {
-  const d = await readDesk();
-  await patchDesk({ wanted: false, status: 'off', fps: 0, interrupted: d.wanted || d.status === 'paused', stopReason: d.wanted ? 'restart' : d.stopReason });
+  await recoverAfterRestart();
   await chrome.alarms.clearAll();
   await scheduleReminder();
   if (await hasSession()) {
@@ -360,4 +380,3 @@ chrome.runtime.onStartup.addListener(async () => {
     await syncNow(prefsChanged);
   }
 });
-

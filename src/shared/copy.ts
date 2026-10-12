@@ -29,5 +29,5 @@ export const STOP_REASON_TEXT: Record<string, string> = {
   idle: COPY.awayStop,
   auto_stop: COPY.autoStop,
   camera_lost: COPY.cameraLost,
-  restart: 'The browser restarted, so monitoring stopped. Start again when you are ready.',
+  restart: 'TrichFree restarted (after a browser restart or an update), so monitoring stopped. Start again when you are ready.',
 };
