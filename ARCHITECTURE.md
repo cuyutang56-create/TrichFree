@@ -244,9 +244,11 @@ The schedule is:
 - days 4–14 randomise each episode to chime or own-voice, in permuted blocks seeded by the code;
 - after day 14 the user's own choice applies.
 
-Rows (timestamps, outcomes, frame rate; never video, images or audio) go into a local upload queue and are sent
-insert-only to Supabase. The server accepts them only for issued codes, and nobody can read them back from a client.
-Without a backend the log stays local and can be exported as CSV.
+Rows (exactly the categories in the pilot notice, `COPY.pilotNotice`; never video, images or audio) go into a local
+upload queue and are sent insert-only to Supabase. Consent is checked twice: when a row is queued, and again before
+every upload. If the participant switches sharing off, rows not yet sent stay on the computer. The server accepts
+rows only for issued codes, and nobody can read them back from a client. Without a backend the log stays local and
+can be exported as CSV. `test/disclosure.test.ts` fails if an uploaded column is missing from the notice.
 
 ## Design decisions worth knowing
 

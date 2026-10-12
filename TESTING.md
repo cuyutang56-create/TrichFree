@@ -4,13 +4,15 @@
 
 | Suite | Command | Size | What it proves | Runs in CI |
 |---|---|---|---|---|
-| Unit | `npm test` | 22 files, 173 tests | Detector, engine, sync merge and orchestration, preference validation, settings migration, privacy rules, CSP, pilot codes, manifest environment, accessibility colour contrast | `test` job |
+| Unit | `npm test` | 26 files, 192 tests | Detector, engine, sync merge and orchestration, preference validation, settings migration, privacy rules, CSP, pilot codes, manifest environment, accessibility colour contrast; release audit: independent detection challenge, pilot consent withdrawal, the notice and policy match what is sent, release packaging guard | `test` job |
 | Typecheck | `npm run typecheck` | whole repo | Types across extension, website, tests and scripts | `test` job |
-| Database integration | `npm run test:integration` | 2 files, 50 tests | Row-level security between two real users, constraints (the app and the database agree), versioned writes and concurrency, an unreachable server ("offline") then reconnection, export, account deletion cascade, pilot form, pilot uploads | `full-stack` job |
-| Extension browser tests | `npm run e2e` (after `npm run build`) | 9 tests | Onboarding, start/pause/stop, reminders, camera denied or missing, voice record/delete, backup and wipe, browser and service-worker restarts, axe accessibility scan of every page | `test` job |
+| Database integration | `npm run test:integration` | 4 files, 57 tests | Row-level security between two real users, constraints (the app and the database agree), versioned writes and concurrency, an unreachable server ("offline") then reconnection, export, account deletion cascade, pilot form, pilot uploads; release audit: sign-out revokes the refresh token, a deleted account's tokens are dead, the exact anonymous API surface, only synced columns leave the device | `full-stack` job |
+| Extension browser tests | `npm run e2e` (after `npm run build`) | 18 tests (`extension` 9, `media-lifecycle` 8, `storage-failure` 1) | Onboarding, start/pause/stop, reminders, camera denied or missing, voice record/delete, backup and wipe, browser and service-worker restarts, axe accessibility scan of every page; every camera and microphone stream (including the detector's clone) released when the user turns it off or leaves, also mid-start; camera permission revoked mid-session; a voice recording that cannot be stored | `test` job |
 | Cross-device browser tests | `npx playwright test e2e/cross-device.spec.ts` | 3 tests | Two independent browser profiles ("two laptops") with one account: save → database → other laptop → change → first laptop updates; same-field conflict notice; session restored after a browser restart; sign out back to guest mode; export and deletion | `full-stack` job |
-| Website browser tests | `npx playwright test e2e/website.spec.ts` | 9 tests | Real security headers served and no CSP violation on any page, social/SEO files, links, phone layout, axe scan, pilot form to database, `/try/` detector, web account flow, website ↔ extension bridge | `full-stack` job |
+| Website browser tests | `npx playwright test e2e/website.spec.ts` | 11 tests | Real security headers served and no CSP violation on any page, social/SEO files, links, phone layout at 375 and 320 px, axe scan, pilot form to database, `/try/` detector and camera off, web account flow, website ↔ extension bridge | `full-stack` job |
+| Bridge attack tests | `npx playwright test e2e/bridge-attack.spec.ts` (after `node scripts/build-e2e.mjs` and `npm run build`) | 2 tests | A production-like build that trusts one origin: unauthorized, malformed, deeply nested and parameter-smuggling messages have no effect; PING reveals no identity or token; an untrusted origin and another extension cannot command TrichFree | `full-stack` job |
 | Detection evaluation | `npm run evaluate` | 12 fixtures × 7 conditions, plus 50 seeds | Latency, missed reaches, false alerts, alert loops on synthetic landmarks → docs/DETECTION_REPORT.md | key properties locked in by `test/evaluate.test.ts` |
+| Independent detection challenge | `npx vitest run test/detection-challenge.test.ts` | 15 scenes × 8 conditions, 6 hair-touch scenes, a 60 s pull, 30-minute sessions | Scenes from a separate generator (`test/challenge/`), not the development fixtures: pulls, everyday movements, ordinary hair touching, a freeze, malformed input, long sessions (docs/INDEPENDENT_RELEASE_AUDIT.md §6) | `test` job (unit) |
 | Soak / resource use | `npm run soak -- 3 --write` | 3 min | Frame rate, CPU and memory with monitoring on and off | manual (needs a real machine to mean anything) |
 
 CI (`.github/workflows/ci.yml`) runs on every push and pull request. The `full-stack` job starts a throwaway
@@ -33,7 +35,7 @@ npm run build && npm run e2e                 # extension tests (the account test
 
 npm run db:start                             # local Supabase: Postgres, Auth, and a mail catcher for sign-in codes
 npm run test:integration
-node scripts/build-e2e.mjs                   # extension + website builds pointed at the local stack
+node scripts/build-e2e.mjs                   # extension + website + strict-bridge builds pointed at the local stack
 npx playwright test                          # all browser tests, including cross-device and website
 npm run db:stop
 ```
@@ -80,6 +82,23 @@ CLI and is never committed.
 - Alert loops bounded by the quiet time.
 - "Slow" versus "stopped" status.
 
+**Release audit** (docs/INDEPENDENT_RELEASE_AUDIT.md)
+- **`e2e/media-lifecycle.spec.ts`** records every camera and microphone track a page creates, including clones,
+  and can delay the device start to simulate a permission prompt or a slow webcam. It covers:
+  - the onboarding camera check, the tune-up and the dashboard preview;
+  - the microphone on the Voice page;
+  - camera permission revoked mid-session.
+- **`e2e/storage-failure.spec.ts`** makes IndexedDB report "storage full" while a voice recording is saved.
+- **`e2e/bridge-attack.spec.ts`** runs with an attacker extension (`e2e/fixtures/attacker-extension`) and an
+  untrusted local origin.
+- **`test/pilot-withdrawal.test.ts`**: nothing is sent after the participant switches sharing off.
+- **`test/disclosure.test.ts`**: every uploaded pilot column must be named in the in-extension notice and the
+  privacy policy.
+- **`test/release-check.test.ts`**: `npm run package` refuses a manifest that trusts local origins or a local
+  backend.
+- **`test/integration/session.int.test.ts`** and **`storage-boundary.int.test.ts`**: sessions and tokens, the
+  anonymous API surface, and what leaves the device.
+
 **Accessibility**
 - `test/a11y-tokens.test.ts` checks WCAG AA contrast for every colour pair in both themes.
 - The extension and website browser tests run axe-core on every page and fail on serious or critical violations.
@@ -103,6 +122,9 @@ the results in PROGRESS.md.
    Close the other app → it continues within about 20 s.
 6. **Lock and restart:** lock the screen → the camera turns off. Restart the browser while monitoring → the camera
    does **not** start by itself, and the popup offers to start again.
+   **Camera off:** in onboarding press "Turn on camera", then "Turn camera off" → the camera light goes off. With
+   monitoring on, press Pause → the light goes off. Open and close "Show what TrichFree sees" on the dashboard,
+   then Pause → the light goes off.
 7. **Voice:** record, preview, save and test a line → reminders use it. Delete it → the chime plays, and the app
    says why.
 8. **Volume:** at 0 it is silent; at 100 it is clear and not distorted.
@@ -130,5 +152,8 @@ the results in PROGRESS.md.
 - Real Chrome or Edge on macOS and Windows: CI uses Linux Chromium.
 - Email deliverability from a production SMTP provider, and the hosted Supabase project's settings: these are
   checked during deployment (DEPLOYMENT.md).
-- Long sessions (hours) and battery use.
+- Long sessions (hours) in a real browser, and battery use. The detector and reminder engine are replayed for
+  30-minute sessions in `test/detection-challenge.test.ts`, but that is not a browser soak.
+- The camera light itself. The tests check that every camera track is stopped; whether the light goes off on a
+  real laptop is part of the manual checklist.
 - Screen readers beyond the automated accessibility checks.

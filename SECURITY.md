@@ -102,6 +102,24 @@ Please report privately. Do not open a public issue.
 | Two inline `style` attributes that the CSP would block | Low | Moved to the stylesheet |
 | Keyboard shortcuts marked "global" with keys Chrome only allows for Ctrl+Shift+0-9, so no shortcut was assigned while the dashboard promised them "from any app" | Low (misleading UI) | Chrome-wide shortcuts that Chrome now assigns; the dashboard explains how to make them global |
 
+### Release audit (later on 2026-10-12)
+
+The release audit (docs/INDEPENDENT_RELEASE_AUDIT.md) attacked the website ↔ extension bridge with an attacker
+extension and an untrusted origin. It also tested sessions and the anonymous API surface against the real stack, and
+checked the camera and microphone lifecycle and the data the pilot sends. It found and fixed the following (details,
+reproduction steps and regression tests in the audit):
+
+| Problem | Severity | Fix |
+|---|---|---|
+| The detector's copy of the camera track was never stopped, so the camera stayed on after "Turn camera off" (onboarding, tune-up, debug page, `/try/`) | High | The vision client owns and stops the track |
+| A hidden second camera stream on the dashboard; a stream leaked when the preview closed during start-up | Medium | The preview exists only while open; late streams are released |
+| The microphone could record unseen for up to 15 s after leaving the Voice page during start-up | Medium | Cancelled recorders stop a late stream |
+| Switching pilot sharing off did not stop rows already queued | Medium | Consent is checked again before every upload |
+| The pilot consent notice and privacy policy left out several uploaded fields | Medium | Text corrected; a test ties every uploaded column to the notice |
+| A development configuration (localhost bridge or backend) could be packaged for release | Low | `npm run package` refuses it |
+
+No bridge, session, row-level security or API-surface defect was found.
+
 ## Remaining risks
 
 These are known and accepted for the pilot stage, with the reason and what would reduce each.
@@ -135,3 +153,12 @@ These are known and accepted for the pilot stage, with the reason and what would
    It was not changed here, because the brief asked not to modify workflow permissions.
 10. **Not independently tested.** This review was done by the build team, not an independent tester. Get an
     external review before a broad public launch.
+11. **Access token after sign-out.** Signing out revokes the refresh token on the server, but the short-lived access
+    token stays valid until it expires (up to 1 hour with `jwt_expiry = 3600`). Signing out while offline cannot
+    revoke the server session at all. Both need a stolen token to matter. A shorter `jwt_expiry` in production
+    reduces the window.
+12. **Local backup import** validates settings but imports the other tables as they are. The user must choose the
+    file, pilot uploads need current consent, and the server validates pilot rows. Validate every table on import
+    if backups are ever shared between people.
+13. **Pilot rows the server keeps rejecting** (for example after a code is deactivated) are retried hourly without
+    limit. Drop them after a set number of days or attempts if this shows up in the pilot.

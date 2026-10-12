@@ -26,6 +26,7 @@ TrichFree is a self-help tool, not a medical device or a treatment.
 | [SECURITY.md](SECURITY.md) | Threat model, controls, review findings and the remaining risks |
 | [docs/DETECTION_REPORT.md](docs/DETECTION_REPORT.md) | How the detector behaves: latency, misses, false alerts, resource use, limits |
 | [IMPACT_READINESS.md](IMPACT_READINESS.md) | Problem, users, product, evidence (implemented / tested / user-validated / proposed), pilot plan, metrics |
+| [docs/INDEPENDENT_RELEASE_AUDIT.md](docs/INDEPENDENT_RELEASE_AUDIT.md) | Release audit: threat model, defects found and fixed, regression results, blockers, GO / NO-GO for the demo and the pilot |
 | [docs/FINAL_REPORT.md](docs/FINAL_REPORT.md) | This release: requirement matrix (PASS / PARTIAL / FAIL / NOT TESTED) with evidence, founder actions, demo |
 | [AUDIT.md](AUDIT.md) | The audit of the original prototype that this release started from, and what happened to each finding |
 | [DECISIONS.md](DECISIONS.md), [PROGRESS.md](PROGRESS.md) | Design decisions and milestone log |

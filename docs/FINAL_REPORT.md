@@ -1,5 +1,11 @@
 # TrichFree: final report (12 October 2026)
 
+> **Superseded in part by the release audit:** [INDEPENDENT_RELEASE_AUDIT.md](INDEPENDENT_RELEASE_AUDIT.md).
+> The audit found defects that this report missed: 1 High, 4 Medium and 6 Low. The High one: the camera stayed
+> on after "Turn camera off". They are fixed on `claude/release-audit`. Where the two documents differ, the
+> audit's status table (§11) and recommendations take precedence. In particular, row "Fix critical and high
+> security issues" below was not true when this report was written.
+
 **Branch:** `claude/affectionate-knuth-s50xg8`, 15 commits on top of the imported prototype: 172 files changed,
 +9,975 / −2,314 lines.
 

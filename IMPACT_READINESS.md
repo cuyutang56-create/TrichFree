@@ -13,6 +13,22 @@ Prepared for the NUSC Impact Incubator (October 2026). Every claim below carries
 user-validated in a study, and there is no evidence yet that TrichFree reduces hair pulling.** The pilot described
 in section 9 exists to find out.
 
+## Evidence status
+
+What we know and what we will do next. The release audit (docs/INDEPENDENT_RELEASE_AUDIT.md) recommends a
+**conditional go** for the 16 October demonstration and **no-go yet** for a real-user pilot, until the actions in
+its §9–10 are done.
+
+| Question | Current evidence | Next action |
+|---|---|---|
+| Do people need it? | Research and practitioner correspondence | Conduct structured user interviews |
+| Can people use it? | Automated onboarding tests | Observe 3–5 first-time users |
+| Does detection work? | Synthetic tests | Consent-based real-world feasibility testing |
+| Are interventions acceptable? | Feature implemented | Collect user preferences and feedback |
+| Does it reduce unwanted pulling? | No outcome evidence | Design an appropriately reviewed pilot |
+| Will users return? | No retention evidence | Measure voluntary continued use |
+| Can the venture sustain itself? | Proposed revenue hypotheses | Test distribution and willingness to support/pay |
+
 ## At a glance
 
 | Capability | Implemented | Tested | User-validated | Proposed next |
@@ -22,7 +38,7 @@ in section 9 exists to find out.
 | Two-step onboarding, test reminder within about a minute | ✅ | ✅ browser tests | ❌ | Usability sessions |
 | Guest mode; optional account with email code sign-in | ✅ | ✅ real auth in tests | ❌ | — |
 | Cross-device settings sync with conflict handling | ✅ | ✅ two independent browser profiles against a real database | ❌ | — |
-| Privacy: video never leaves the device; voice never uploaded | ✅ | ✅ automated checks of network code and CSP | ❌ | External security review |
+| Privacy: video never leaves the device; voice never uploaded; camera and microphone off when the user turns them off | ✅ | ✅ automated checks of network code and CSP; camera/microphone release tests with fake devices | ❌ | Real-laptop check of the camera light; external security review |
 | Data export and account deletion | ✅ | ✅ | ❌ | — |
 | Public website, in-browser demo, pilot interest form | ✅ | ✅ | ❌ | Deploy (founder action) |
 | Pilot research mode (randomised chime vs own voice) | ✅ | ✅ randomisation and upload tests | ❌ | Ethics approval, recruitment |
@@ -100,9 +116,13 @@ a way they chose — possibly in their own voice — privately and without judge
 - **Privacy-preserving cross-device sync** — *Implemented, Tested.* Settings sync field by field. When two devices
   change the same setting, the user is told rather than silently overwritten. Voice recordings are deliberately
   never uploaded; users record again on a new computer.
-- **Security engineering** — *Implemented, Tested.* Row-level security with cross-user isolation tests, strict
-  content security policies verified in browser tests, unguessable pilot codes, checksum-pinned models
-  (SECURITY.md).
+- **Security engineering** — *Implemented, Tested.*
+  - Row-level security with cross-user isolation tests.
+  - Strict content security policies, verified in browser tests.
+  - Unguessable pilot codes and checksum-pinned models (SECURITY.md).
+  - An internal release audit attacked the website–extension bridge, sessions and the API surface. It found and
+    fixed 1 high, 4 medium and 6 low issues, the high one being the camera staying on after "Turn camera off"
+    (docs/INDEPENDENT_RELEASE_AUDIT.md). There has been no external review yet.
 
 ## 6. Research-informed personalisation
 
@@ -138,7 +158,9 @@ These come from the team's own records (PROGRESS.md, DECISIONS.md, git history):
   - public website with an in-browser demo and pilot form;
   - detection harness and slow-computer fixes;
   - security review;
-  - 173 unit, 50 database and 21 browser tests, running in CI.
+  - release audit (docs/INDEPENDENT_RELEASE_AUDIT.md): 11 defects found and fixed, and an independent detection
+    challenge;
+  - 192 unit, 57 database and 34 browser tests, running in CI.
   *Implemented, Tested.*
 
 ## 8. Current limitations
@@ -147,14 +169,16 @@ These come from the team's own records (PROGRESS.md, DECISIONS.md, git history):
 - **Detection accuracy on real people is unknown.**
   - The evaluation uses synthetic landmarks.
   - Real cameras, lighting, skin tones, hairstyles, head coverings and glasses are untested.
-  - Scratching the scalp can look like a reach (a known false positive).
+  - Scratching the scalp or gathering hair into a ponytail can look like a reach (known false positives: 2 of 6
+    synthetic hair-touch scenes in the release audit's challenge caused a reminder).
   - The extension cannot tell every genuine pulling episode apart from ordinary hair touching, and says so.
 - **Desktop Chrome and Edge only**, with a webcam. No mobile, Safari or Firefox support for the extension (the
   `/try/` demo works more widely).
 - **Voice recordings do not sync**, by design, so they must be recorded again on each computer.
 - **Not deployed.** The website, backend and store listing need the team's accounts (DEPLOYMENT.md). The Chrome Web
   Store review for camera extensions can take days.
-- **Not independently reviewed** for security or accessibility. Automated checks only, plus our own review.
+- **Not independently reviewed** for security or accessibility. There are automated checks plus our own release
+  audit, which was carried out by the same AI agent that wrote the code.
 - **Resource use** was measured on one machine without a GPU, not yet on typical student laptops.
 
 ## 9. Pilot validation strategy
@@ -164,9 +188,20 @@ These come from the team's own records (PROGRESS.md, DECISIONS.md, git history):
 - **Design.** 14 days per participant. Days 1–3 are a silent baseline: detection logs only, which measures the
   detector and natural hand-down behaviour. Days 4–14 randomise each episode to chime or own-voice, in permuted
   blocks seeded per participant (within-person comparison).
-- **Data.** Pseudonymous rows keyed by a random participant code: episode times, reminder type, whether the hand
-  came down within 10 s, "Not a pull" / "I just pulled" taps, desk minutes. Never video, images or audio.
-  Participants can stop sharing at any time.
+- **Data.** Pseudonymous rows keyed by a random participant code: exactly what the in-extension notice lists
+  (`src/shared/copy.ts`, enforced by `test/disclosure.test.ts`). That means:
+  - episode times and the pilot day;
+  - the area of the head;
+  - which reminder played and how many voice clips;
+  - whether and how quickly the hand came down;
+  - detector measurements;
+  - "Not a pull" / "I just pulled" taps;
+  - start, pause and stop times, desk minutes and app events;
+  - the chosen reminder type, detection speed and app version;
+  - calibration scores, zones and timing.
+
+  Never video, images or audio. Participants can stop sharing at any time; rows not yet sent then stay on their
+  computer.
 - **Questions.**
   1. Does a reminder interrupt a reach (hand-down rate after a reminder versus baseline)?
   2. Is own-voice better than a chime?
@@ -184,9 +219,9 @@ These come from the team's own records (PROGRESS.md, DECISIONS.md, git history):
 
 - **Privacy** (SECURITY.md, ARCHITECTURE.md, the website's privacy policy) — *Implemented, Tested.*
   - Camera analysis happens on the device and is never stored.
-  - Voice recordings and history stay on the device.
-  - Only settings, reflections and the account email are in the cloud, protected by row-level security and
-    isolation tests.
+  - Voice recordings stay on the device. History stays there too, except opt-in pilot data.
+  - Only the account email, settings (with a random identifier of the browser that last changed them) and
+    reflections are in the cloud, protected by row-level security and isolation tests.
   - No third-party analytics or trackers.
   - Export and deletion are available to every user.
 - **Safety** — *Implemented.*
@@ -194,6 +229,8 @@ These come from the team's own records (PROGRESS.md, DECISIONS.md, git history):
   - The copy is gentle and never punishes.
   - Monitoring can be paused or stopped at once.
   - The camera is never restarted silently after a browser restart.
+  - The camera and microphone are released as soon as the user turns them off or leaves the page. This was fixed
+    in the release audit and tested with fake devices; the real-laptop check is pending.
   - Support contacts are shown in Singapore (National mindline 1771, Samaritans of Singapore 1767, emergency 995)
     and internationally (The TLC Foundation for BFRBs; Trichotillomania Support, a UK non-profit). These were
     verified on 2026-10-12 and should be re-checked before launch.
