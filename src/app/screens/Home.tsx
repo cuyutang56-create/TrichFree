@@ -163,7 +163,11 @@ export function Home({ settings, go }: ScreenProps) {
             <button className="btn" onClick={() => void fb('not_a_pull')}>Not a pull</button>
             <button className="btn" onClick={() => void fb('i_pulled')}>I just pulled</button>
           </div>
-          <p className="small muted" style={{ marginTop: 8 }}>From any app: <kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd> not a pull · <kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>U</kbd> I just pulled</p>
+          <p className="small muted" style={{ marginTop: 8 }}>
+            In Chrome: <kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd> not a pull · <kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>U</kbd> I just pulled.
+            To use them from other apps too, set them to “Global” in{' '}
+            <button type="button" className="linklike" onClick={() => void chrome.tabs.create({ url: 'chrome://extensions/shortcuts' })}>keyboard shortcuts</button>.
+          </p>
         </section>
       )}
 

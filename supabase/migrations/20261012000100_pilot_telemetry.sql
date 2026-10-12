@@ -1,4 +1,4 @@
--- Pilot telemetry (optional research pilot). Rows are keyed by an anonymous participant code (TF-XXXX);
+-- Pilot telemetry (optional research pilot). Rows are keyed by an anonymous participant code (TF-XXXX-XXXX);
 -- the team keeps the code-to-person list offline. Never contains video, images or audio.
 -- Idempotent so it also applies cleanly to a project that ran the old supabase/schema.sql by hand.
 
@@ -26,9 +26,10 @@ create table if not exists public.calibrations (
 );
 
 -- Issued participant codes. Only codes listed here can upload, so the public anon key cannot be used
--- to fabricate pilot data for arbitrary codes. The team inserts codes in the dashboard (see README pilot runbook).
+-- to fabricate pilot data for arbitrary codes. Codes are long and random (scripts/make-pilot-codes.mjs:
+-- about 39 bits from an unambiguous alphabet) so an issued code cannot be found by guessing either.
 create table if not exists public.pilot_codes (
-  code text primary key check (code ~ '^TF-[A-Z0-9]{4}$'),
+  code text primary key check (code ~ '^TF-[2-9A-HJKMNP-TV-Z]{4}-[2-9A-HJKMNP-TV-Z]{4}$'),
   active boolean not null default true,
   created_at timestamptz not null default now()
 );

@@ -30,9 +30,11 @@ export default defineManifest({
   ...(bridgeMatches.length ? { externally_connectable: { matches: bridgeMatches } } : {}),
   background: { service_worker: 'src/background/sw.ts', type: 'module' },
   action: { default_popup: 'src/popup/index.html', default_icon: { 16: 'icons/16.png', 32: 'icons/32.png' } },
+  // Chrome only accepts Ctrl+Shift+0-9 as suggested keys for *global* commands and silently assigns nothing
+  // otherwise, so these are Chrome-wide suggestions; users can make them global in chrome://extensions/shortcuts.
   commands: {
-    'not-a-pull': { suggested_key: { default: 'Ctrl+Shift+Y', mac: 'Command+Shift+Y' }, description: 'Not a pull', global: true },
-    'i-just-pulled': { suggested_key: { default: 'Ctrl+Shift+U', mac: 'Command+Shift+U' }, description: 'I just pulled', global: true },
+    'not-a-pull': { suggested_key: { default: 'Ctrl+Shift+Y', mac: 'Command+Shift+Y' }, description: 'Not a pull' },
+    'i-just-pulled': { suggested_key: { default: 'Ctrl+Shift+U', mac: 'Command+Shift+U' }, description: 'I just pulled' },
     'toggle-desk': { suggested_key: { default: 'Ctrl+Shift+K', mac: 'Command+Shift+K' }, description: 'Start/stop monitoring' },
   } as any,
   content_security_policy: {

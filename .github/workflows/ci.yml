@@ -12,5 +12,24 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - run: npm run build:web
       - run: npx playwright install --with-deps chromium
       - run: xvfb-run -a npm run e2e
+
+  # Accounts, row-level security and sync against a real (local, throwaway) Supabase stack in Docker:
+  # database integration tests, then the two-profile cross-device and website browser tests.
+  full-stack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run fetch-models
+      - run: npx supabase start
+      - run: npm run test:integration
+      - run: node scripts/build-e2e.mjs
+      - run: npx playwright install --with-deps chromium
+      - run: xvfb-run -a npx playwright test e2e/cross-device.spec.ts e2e/website.spec.ts
+      - if: always()
+        run: npx supabase stop --no-backup

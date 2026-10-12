@@ -7,7 +7,7 @@ import { COPY } from '../../shared/copy';
 import { downloadBlob, pilotCsvs } from '../../shared/csvExport';
 import { pickSynced } from '../../shared/db';
 import { send, type AccountReply, type AccountState } from '../../shared/messages';
-import { PARTICIPANT_CODE_RE, TEAM_EMAIL, pilotInfo } from '../../shared/pilot';
+import { PARTICIPANT_CODE_RE, TEAM_EMAIL, normaliseParticipantCode, pilotInfo } from '../../shared/pilot';
 import { telemetryConfigured } from '../../shared/uploadQueue';
 import { ConfirmDialog, Notice, Switch, Toast } from '../../ui/controls';
 import { PreferencesForm } from '../../ui/PreferencesForm';
@@ -162,7 +162,9 @@ function DataPanel({ signedIn, flash }: { signedIn: boolean; flash: (m: string) 
       <ul className="small">
         <li><strong>Stays here:</strong> camera analysis (never saved), voice recordings, history of reminders, calibration and the personal model.</li>
         <li><strong>{signedIn ? 'Synced to your account' : 'With an account, synced'}:</strong> reminder, detection, companion and accessibility settings only.</li>
+        <li><strong>Shared computer?</strong> Use your own browser profile: anyone using this profile can open TrichFree and see this data.</li>
       </ul>
+      <p className="small muted">A backup file contains your voice recordings and history. Keep it somewhere private.</p>
       <div className="row">
         <button className="btn" onClick={async () => { downloadBlob(await exportBackup(), backupFilename()); flash('Backup downloaded.'); }}>Export backup (.zip)</button>
         <button className="btn" onClick={() => fileRef.current?.click()}>Import backup…</button>
@@ -197,18 +199,19 @@ function PilotPanel({ settings, flash }: { settings: ScreenProps['settings']; fl
   const [code, setCode] = useState(settings.participantCode ?? '');
   const [agree, setAgree] = useState(false);
   const pilot = pilotInfo(settings);
-  const norm = code.trim().toUpperCase();
+  const norm = normaliseParticipantCode(code);
   const valid = PARTICIPANT_CODE_RE.test(norm);
   return (
     <section className="card stack" id="section-pilot" aria-labelledby="pilot-h">
       <h2 id="pilot-h">Research pilot</h2>
       {!settings.participantCode ? (
         <>
-          <p className="small muted">Only if the TrichFree research team gave you a participant code (it looks like TF-AB12). Most people can skip this.</p>
+          <p className="small muted">Only if the TrichFree research team gave you a participant code (it looks like TF-K7QM-3XWD). Most people can skip this.</p>
           <div className="field" style={{ maxWidth: 240 }}>
             <label htmlFor="pilot-code">Participant code</label>
-            <input id="pilot-code" type="text" value={code} maxLength={7} placeholder="TF-XXXX" aria-invalid={!!norm && !valid} onChange={(e) => setCode(e.target.value)} />
-            {norm && !valid && <span className="error">A code is TF- followed by 4 letters or numbers.</span>}
+            <input id="pilot-code" type="text" value={code} maxLength={16} placeholder="TF-XXXX-XXXX" autoComplete="off" spellCheck={false}
+              aria-invalid={!!norm && !valid} aria-describedby={norm && !valid ? 'pilot-code-err' : undefined} onChange={(e) => setCode(e.target.value)} />
+            {norm && !valid && <span className="error" id="pilot-code-err">A code looks like TF-K7QM-3XWD: TF, then two groups of 4 letters or numbers.</span>}
           </div>
           {valid && (
             <>

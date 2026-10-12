@@ -18,6 +18,18 @@ test.skip(!ready, 'needs: npx supabase start && node scripts/build-e2e.mjs');
 let server: ChildProcess | null = null;
 let browser: Browser;
 
+// `vite preview` serves the same security headers a host applies from _headers (vite.web.config.ts), so any page
+// that the strict Content-Security-Policy would break fails here, not in production.
+const cspViolations: string[] = [];
+function watchCsp(page: Page) {
+  page.on('console', (m) => {
+    if (/Content Security Policy|Refused to (load|execute|apply|connect|create|frame)/i.test(m.text())) cspViolations.push(`${page.url()}: ${m.text()}`);
+  });
+}
+test.afterEach(() => {
+  expect(cspViolations.splice(0), 'Content-Security-Policy violations').toEqual([]);
+});
+
 test.beforeAll(async () => {
   server = spawn('npx', ['vite', 'preview', '-c', 'vite.web.config.ts'], { env: { ...process.env, WEB_OUT_DIR: 'dist-web-e2e', VITE_CONFIG_NATIVE_IGNORE_WARNING: 'true' }, stdio: 'ignore', detached: true });
   for (let i = 0; i < 60; i++) {
@@ -28,6 +40,10 @@ test.beforeAll(async () => {
     ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : { channel: 'chromium' }),
     args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'],
   });
+  const newPage = browser.newPage.bind(browser);
+  browser.newPage = async (o) => { const p = await newPage(o); watchCsp(p); return p; };
+  const newContext = browser.newContext.bind(browser);
+  browser.newContext = async (o) => { const c = await newContext(o); c.on('page', watchCsp); return c; };
 });
 test.afterAll(async () => {
   await browser?.close();
@@ -37,6 +53,22 @@ test.afterAll(async () => {
 async function noHorizontalScroll(page: Page) {
   return page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
 }
+
+test('security headers: the real policy is served, and every page loads under it', async () => {
+  const res = await fetch(`${BASE}/`);
+  const csp = res.headers.get('content-security-policy') ?? '';
+  for (const d of ["default-src 'self'", "script-src 'self' 'wasm-unsafe-eval'", "object-src 'none'", "frame-ancestors 'none'"]) expect(csp).toContain(d);
+  expect(csp).not.toContain('unsafe-inline');
+  expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+  expect(res.headers.get('x-frame-options')).toBe('DENY');
+  expect(res.headers.get('permissions-policy')).toContain('camera=(self)');
+  for (const path of ['/', '/privacy/', '/try/', '/app/', '/404.html']) {
+    const page = await browser.newPage();
+    await page.goto(`${BASE}${path}`);
+    await page.waitForLoadState('networkidle');
+    await page.close();
+  }
+});
 
 test('landing page: every internal link and anchor leads somewhere real', async () => {
   const page = await browser.newPage();
@@ -188,6 +220,7 @@ test('web account: sign in with a code, change settings, reflections, export, de
 test('website and extension in one browser: detection, and a web change reaches the extension at once', async () => {
   const email = uniqueEmail('bridge');
   const ext = await launch({ dist: DIST_E2E });
+  ext.context.on('page', watchCsp);
   try {
     const page = await firstPage(ext);
     await onboard(page);

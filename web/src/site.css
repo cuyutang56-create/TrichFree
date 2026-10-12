@@ -85,3 +85,4 @@ fieldset.field legend { padding: 0; margin-bottom: 6px; }
 .doc th, .doc td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--border); }
 .doc th { background: var(--surface-2); }
 .table-scroll { overflow-x: auto; }
+.noscript { padding: 24px; }

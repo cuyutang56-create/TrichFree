@@ -21,7 +21,7 @@ const shot = async (name, p = page) => { await p.waitForTimeout(600); await p.sc
 await shot('01-welcome');
 await page.getByRole('button', { name: 'Let’s start' }).click();
 await page.getByLabel("I'm 18 or older.").check();
-await page.getByLabel('Participant code').fill('TF-AB12');
+await page.getByLabel('Participant code').fill('TF-K7QM-3XWD');
 await shot('02-consent');
 await page.getByLabel("I'm 18 or older.").check();
 await page.getByLabel('I understand this is a self-help tool, not treatment.').check();

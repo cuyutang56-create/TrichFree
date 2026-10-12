@@ -1,0 +1,9 @@
+# Netlify: builds and serves the public website (landing page, /privacy/, /try/, /app/).
+# Security headers (CSP, HSTS, frame and permissions policies) come from the generated dist-web/_headers.
+# Set the VITE_* variables in Site configuration → Environment variables (see DEPLOYMENT.md); never a secret key.
+[build]
+  command = "npm run build:web"
+  publish = "dist-web"
+
+[build.environment]
+  NODE_VERSION = "22"

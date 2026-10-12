@@ -199,15 +199,19 @@ describe('public pilot interest form', () => {
 
 describe('pilot telemetry (anonymous research uploads)', () => {
   const row = (code: string) => ({ id: crypto.randomUUID(), participant_code: code, type: 'pause', t: new Date().toISOString(), app_version: 'test' });
+  it('the database only accepts issued codes in the long random format', async () => {
+    const { error } = await adminClient().from('pilot_codes').insert({ code: 'TF-AB12' });
+    expect(error?.code).toBe('23514'); // check_violation: short, guessable codes cannot even be registered
+  });
   it('rejects codes the team did not issue', async () => {
-    const { error } = await anonClient().from('events').insert(row('TF-ZZZZ'));
+    const { error } = await anonClient().from('events').insert(row('TF-ZZZZ-ZZZZ'));
     expect(error?.code).toBe('42501');
   });
   it('accepts issued codes through the real upload path, treats re-uploads as sent, and cannot be read back', async () => {
-    const { error: seedErr } = await adminClient().from('pilot_codes').upsert({ code: 'TF-T3ST' });
+    const { error: seedErr } = await adminClient().from('pilot_codes').upsert({ code: 'TF-TE5T-2345' });
     expect(seedErr).toBeNull();
     const anon = anonClient();
-    const r1 = row('TF-T3ST'), r2 = row('TF-T3ST');
+    const r1 = row('TF-TE5T-2345'), r2 = row('TF-TE5T-2345');
     expect(await uploadBatch(anon, 'events', [r1])).toEqual({ sent: [0], failed: [] });
     // Retry after a lost response: r1 again plus a new row. Both count as sent; r2 is stored once.
     expect(await uploadBatch(anon, 'events', [r1, r2])).toEqual({ sent: [0, 1], failed: [] });
@@ -217,6 +221,6 @@ describe('pilot telemetry (anonymous research uploads)', () => {
     expect(error !== null || (data ?? []).length === 0).toBe(true);
   });
   it('an unissued code in a batch fails that batch without crashing the queue', async () => {
-    expect(await uploadBatch(anonClient(), 'events', [row('TF-NOPE')])).toEqual({ sent: [], failed: [0] });
+    expect(await uploadBatch(anonClient(), 'events', [row('TF-N0PE-0000')])).toEqual({ sent: [], failed: [0] });
   });
 });

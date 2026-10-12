@@ -1,6 +1,9 @@
 # Local Supabase stack for development and automated tests (`npx supabase start`).
 # The hosted production project is configured in the Supabase dashboard; see DEPLOYMENT.md for the
 # matching production settings. Only the services TrichFree uses are enabled here.
+#
+# DO NOT `supabase config push` THIS FILE TO PRODUCTION: its site URL is localhost and its auth rate limits are
+# raised so the tests can sign many users in quickly. Production uses `supabase db push` (migrations) only.
 project_id = "trichfree"
 
 [api]
