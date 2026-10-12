@@ -17,7 +17,7 @@ jobs:
       - run: xvfb-run -a npm run e2e
 
   # Accounts, row-level security and sync against a real (local, throwaway) Supabase stack in Docker:
-  # database integration tests, then the two-profile cross-device and website browser tests.
+  # database integration tests, then the two-profile cross-device, website and bridge-attack browser tests.
   full-stack:
     runs-on: ubuntu-latest
     steps:
@@ -29,7 +29,8 @@ jobs:
       - run: npx supabase start
       - run: npm run test:integration
       - run: node scripts/build-e2e.mjs
+      - run: npm run build
       - run: npx playwright install --with-deps chromium
-      - run: xvfb-run -a npx playwright test e2e/cross-device.spec.ts e2e/website.spec.ts
+      - run: xvfb-run -a npx playwright test e2e/cross-device.spec.ts e2e/website.spec.ts e2e/bridge-attack.spec.ts
       - if: always()
         run: npx supabase stop --no-backup

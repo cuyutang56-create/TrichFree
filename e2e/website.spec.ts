@@ -132,6 +132,15 @@ test('landing page on a phone: no sideways scrolling, and the menu works by keyb
   await page.close();
 });
 
+test('narrowest phones (320 px, the WCAG reflow width): no page scrolls sideways', async () => {
+  const page = await browser.newPage({ viewport: { width: 320, height: 640 }, hasTouch: true });
+  for (const path of ['/', '/privacy/', '/try/', '/app/', '/404.html']) {
+    await page.goto(`${BASE}${path}`);
+    expect(await noHorizontalScroll(page), path).toBe(true);
+  }
+  await page.close();
+});
+
 test('accessibility basics: no serious axe violations, one h1, skip link, labelled controls', async () => {
   const context = await browser.newContext();
   const page = await context.newPage();
