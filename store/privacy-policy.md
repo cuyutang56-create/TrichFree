@@ -10,8 +10,8 @@ In short (the policy has the details):
 - TrichFree works without an account. With a free account, Supabase stores the email address, the reminder
   settings and any reflections the user saves. Row-level security protects them, and the user can export or delete
   them at any time.
-- Research pilot participants who opt in send pseudonymous rows (times, reminder type, outcomes, feedback taps),
-  never video, images or audio.
+- Research pilot participants who opt in send pseudonymous rows (times, the area of the head, reminder type,
+  outcomes, feedback taps, app events and detector performance), never video, images or audio.
 - No ads, no tracking, no third-party scripts; data is never sold.
 
 Before publishing, fill in what only the team can confirm:

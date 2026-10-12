@@ -19,7 +19,7 @@ export const COPY = {
   kindWords: 'Kind words tend to help more than harsh ones. Try lines about what you can do, not about damage or appearance.',
   limits: 'TrichFree notices possible hand-to-hair movements. It cannot tell every pull apart from ordinary touching, and it is not a medical device.',
   pilotNotice:
-    "During the pilot, the app sends the research team: your participant code; the times episodes were detected; which reminder played; whether your hand came down within 10 seconds; your 'Not a pull' and 'I just pulled' taps; desk minutes; and calibration quality scores. It never sends video, images or your voice. You can stop sending at any time in Settings.",
+    "During the pilot, the app sends the research team, labelled only with your participant code: when each possible pull was detected and which day of the pilot it was; which area of your head it was near; which reminder played and how many of your voice clips; whether and how quickly your hand came down; a few detector measurements of the movement; your 'Not a pull' and 'I just pulled' taps; when TrichFree was started, paused, resumed and stopped, your desk minutes and other app events (such as camera problems); the reminder type you chose, how fast detection runs on your computer and the app version; and calibration quality scores, the areas you chose to watch and the detection timing. It never sends video, images or your voice. You can stop sending at any time in Settings: anything not yet sent then stays on this computer.",
   voiceLocal: 'Voice recordings stay on this device. They are not uploaded, so on another computer you record them again.',
 };
 
