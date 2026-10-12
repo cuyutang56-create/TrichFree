@@ -1,0 +1,10 @@
+node_modules
+dist
+release
+.env
+.env.local
+public/mediapipe/wasm
+public/mediapipe/models
+test-results
+playwright-report
+.DS_Store
