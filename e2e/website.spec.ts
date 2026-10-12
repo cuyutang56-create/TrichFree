@@ -70,6 +70,20 @@ test('security headers: the real policy is served, and every page loads under it
   }
 });
 
+test('social previews and search: og:image, canonical, robots and sitemap point at real files', async () => {
+  const page = await browser.newPage();
+  await page.goto(`${BASE}/`);
+  const og = await page.locator('meta[property="og:image"]').getAttribute('content');
+  expect(og).toBe(`${BASE}/og-image.png`);
+  const img = await fetch(og!);
+  expect(img.status).toBe(200);
+  expect(img.headers.get('content-type')).toContain('image/png');
+  expect(await page.locator('link[rel="canonical"]').getAttribute('href')).toBe(`${BASE}/`);
+  expect(await (await fetch(`${BASE}/robots.txt`)).text()).toContain(`Sitemap: ${BASE}/sitemap.xml`);
+  expect(await (await fetch(`${BASE}/sitemap.xml`)).text()).toContain(`<loc>${BASE}/try/</loc>`);
+  await page.close();
+});
+
 test('landing page: every internal link and anchor leads somewhere real', async () => {
   const page = await browser.newPage();
   await page.goto(`${BASE}/`);
