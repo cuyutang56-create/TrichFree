@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { AppSettings } from '../shared/db';
 import { ACCOUNTS_CONFIGURED } from '../shared/config';
+import { send } from '../shared/messages';
 import { Notice } from '../ui/controls';
 import { startMonitoring, useAccount, useSettings } from './hooks';
 import { Calibrate } from './screens/Calibrate';
@@ -40,6 +41,16 @@ export function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
   useEffect(() => { document.documentElement.classList.toggle('reduce-motion', !!settings?.reduceMotion); }, [settings?.reduceMotion]);
+  // Show settings changed on another device as soon as this page is opened or looked at again
+  // (the service worker skips it if it synced within the last minute).
+  useEffect(() => {
+    if (!ACCOUNTS_CONFIGURED) return;
+    const nudge = () => { if (document.visibilityState === 'visible') void send({ target: 'sw', type: 'SYNC_IF_STALE' }).catch(() => {}); };
+    nudge();
+    window.addEventListener('focus', nudge);
+    document.addEventListener('visibilitychange', nudge);
+    return () => { window.removeEventListener('focus', nudge); document.removeEventListener('visibilitychange', nudge); };
+  }, []);
 
   if (!settings) return <p className="loading" role="status">Loading…</p>;
   let r = route;

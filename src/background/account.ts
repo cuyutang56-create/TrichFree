@@ -98,6 +98,16 @@ export function syncNow(onPrefsChanged: () => Promise<void>): Promise<AccountRep
   });
 }
 
+/** Opening a TrichFree page shows current settings without waiting for the 15-minute sync. */
+export const STALE_AFTER_MS = 60_000;
+let lastNudgeAt = 0; // focus and visibility events often arrive together: one sync is enough
+export async function syncIfStale(onPrefsChanged: () => Promise<void>, now = Date.now()): Promise<AccountReply> {
+  const a = await readAccount();
+  if (!a.signedIn || now - Math.max(lastNudgeAt, a.lastSyncAt ?? 0) < STALE_AFTER_MS) return { ok: true };
+  lastNudgeAt = now;
+  return syncNow(onPrefsChanged);
+}
+
 export function signOut(): Promise<AccountReply> {
   const c = sb();
   if (!c) return Promise.resolve({ ok: true });

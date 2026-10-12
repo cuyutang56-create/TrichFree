@@ -58,14 +58,23 @@ test('Laptop A saves → database → Laptop B retrieves and changes → Laptop 
     await pb.getByRole('radio', { name: 'Sensitive' }).check();
     await expect.poll(async () => (await prefsInDb(email))?.sensitivity, { timeout: 15_000 }).toBe('sensitive');
 
-    // 7. A picks up B's change (here via "Sync now"; it also syncs every 15 minutes and on browser start)
+    // 7. Later, the user opens TrichFree on A: it picks up B's change by itself (opening or refocusing a TrichFree
+    //    page syncs when the last sync is over a minute old; it also syncs every 15 minutes and on browser start)
     //    and keeps its own value for the field B did not touch.
-    await pa.goto(A.url('#/settings?section=account'));
-    await pa.getByRole('button', { name: 'Sync now' }).click();
+    await A.sw.evaluate(async () => {
+      const { accountState } = await chrome.storage.local.get('accountState');
+      await chrome.storage.local.set({ accountState: { ...(accountState as object), lastSyncAt: Date.now() - 120_000 } }); // "a while later"
+    });
+    await pa.goto(A.url('#/settings'));
+    await pa.reload();
     await expect(pa.getByRole('radio', { name: 'Sensitive' })).toBeChecked({ timeout: 15_000 });
     await expect(pa.getByRole('radio', { name: /Visual only/ })).toBeChecked();
     await pa.goto(A.url('#/home'));
     await expect(pa.getByText('Updated from your other device')).toBeVisible();
+    // "Sync now" works too.
+    await pa.goto(A.url('#/settings?section=account'));
+    await pa.getByRole('button', { name: 'Sync now' }).click();
+    await expect(pa.getByTestId('sync-status')).toHaveText('Up to date', { timeout: 15_000 });
 
     // Same field changed on both before syncing: the change that reached the server first is kept, and the
     // other laptop is told (never a silent overwrite).

@@ -10,7 +10,7 @@ import { INITIAL_DESK, on, readAccount, readDesk, send, type DeskState, type Fee
 import { microPromptText } from '../sync/prefs';
 import { APP_VERSION } from '../shared/config';
 import { bridgeAllowed } from '../shared/bridge';
-import { SYNC_ALARM, SYNC_EVERY_MIN, deleteMyAccount, dismissNotice, exportMine, hasSession, initAccount, sendCode, signOut, syncNow, verifyCode } from './account';
+import { SYNC_ALARM, SYNC_EVERY_MIN, deleteMyAccount, dismissNotice, exportMine, hasSession, initAccount, sendCode, signOut, syncIfStale, syncNow, verifyCode } from './account';
 
 const OFFSCREEN_URL = 'src/offscreen/offscreen.html';
 const APP_URL = 'src/app/index.html';
@@ -198,6 +198,7 @@ on('sw', async (msg) => {
     case 'ACCOUNT_DELETE': return deleteMyAccount();
     case 'ACCOUNT_EXPORT': return exportMine();
     case 'SYNC_NOW': return syncNow(prefsChanged);
+    case 'SYNC_IF_STALE': return syncIfStale(prefsChanged);
     case 'NOTICE_DISMISS': await dismissNotice(); return { ok: true };
   }
 });
