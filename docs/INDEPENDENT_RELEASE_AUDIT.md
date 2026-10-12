@@ -216,6 +216,8 @@ Severity scale:
   - The effect's cleanup ran before `getUserMedia` resolved, so a late stream was never stopped.
 - **Impact:** a second, invisible camera stream costing CPU and battery. In the race, a stream outlived the panel
   and could outlive monitoring. Nothing was stored or sent.
+- **Proposed fix:** mount the preview only while the panel is open, and release any stream that arrives after the
+  preview has gone.
 - **Implemented fix (`daba8b3`):**
   - The preview is mounted only while the panel is open (`previewOpen`).
   - A `closed` flag stops a stream that arrives after unmount.
@@ -233,6 +235,7 @@ Severity scale:
   carried on and built a `MediaRecorder` on the late stream.
 - **Impact:** up to 15 s of microphone use with no visible control, against the user's action of leaving. The
   audio was discarded (never saved or sent), but the user could not know that.
+- **Proposed fix:** remember the cancellation and stop a microphone stream that arrives afterwards.
 - **Implemented fix (`daba8b3`):**
   - `cancel()` marks the recorder cancelled.
   - `start()` stops a late stream and throws `AbortError`.
@@ -254,6 +257,9 @@ Severity scale:
   they were *sent*.
 - **Impact:** pseudonymous behavioural data, including the head area and timings, sent after the participant
   withdrew consent. No media. The pilot has not started, so no real data was affected.
+- **Proposed fix:** check consent again immediately before sending. Rows not yet sent should either stay local or be
+  deleted. We keep them local, so a participant who switches sharing back on loses nothing collected while they
+  agreed.
 - **Implemented fix (`93777f5`):** `flush()` checks current consent first. Unsent rows stay on the computer and are
   sent only if sharing is switched back on; they were collected while the participant agreed.
 - **Regression test:** `test/pilot-withdrawal.test.ts`. It uses a real (fake-indexeddb) database and a recording
@@ -281,6 +287,9 @@ Severity scale:
 - **Root cause:** the telemetry grew after the notice was written, and nothing tied the two together.
 - **Impact:** participants would consent to a description that leaves out health-related fields (the head area) and
   usage timings. This is an informed-consent and ethics problem. No data has been collected yet.
+- **Proposed fix:** either make the notice complete, or stop collecting what it does not mention. That second
+  option is a research-design choice for the founder and ethics review. Either way, tie the notice to the code
+  with a test.
 - **Implemented fix (`c306489`):** the notice, the policy and the store summaries now list every category.
   Collection is unchanged: removing fields would be a research-design decision for the founder (§10).
 - **Regression test:** `test/disclosure.test.ts`.
@@ -300,6 +309,7 @@ Severity scale:
 - **Root cause:** a track ended by revocation was treated like a camera taken by another app, and the retry
   swallowed `NotAllowedError`.
 - **Impact:** a misleading status. The camera was correctly off.
+- **Proposed fix:** tell a revoked permission apart from a busy camera, and report it at once.
 - **Implemented fix (`daba8b3`):**
   - When the camera is lost, check `navigator.permissions` at once.
   - Treat `NotAllowedError`/`SecurityError` during retries as a permission problem.
@@ -320,6 +330,7 @@ Severity scale:
 - **Root cause:** the save transaction's rejection was not handled.
 - **Impact:** a user can believe their new own-voice reminder was saved. The old recording was safe (same
   transaction).
+- **Proposed fix:** catch the failure, tell the user, and keep the unsaved recording so they can retry.
 - **Implemented fix (`2cec5a7`):**
   - Show "This recording could not be saved[: the computer seems to be out of storage space]. Your earlier
     recording is unchanged…".
@@ -337,6 +348,7 @@ Severity scale:
 - **Root cause:** packaging did not inspect the built manifest.
 - **Impact:** local pages could send the four bridge commands (they cannot start the camera or read data), or the
   release would not work. Requires a developer mistake.
+- **Proposed fix:** inspect the built manifest before zipping and refuse local or test settings.
 - **Implemented fix (`0dc725b`):** `releaseProblems()` refuses to package any of the following:
   - local or non-HTTPS `externally_connectable` origins;
   - local or HTTP `host_permissions` or CSP `connect-src`;
@@ -356,6 +368,7 @@ Severity scale:
 - **Root cause:** the code assumed MediaPipe's shape.
 - **Impact:** only replayed or corrupted recordings (`npm run replay`, debug tooling). Live MediaPipe output always
   has 21 points.
+- **Proposed fix:** validate the landmark shape at the pipeline boundary.
 - **Implemented fix (`c642e11`):** malformed hands are skipped; a missing array counts as "no hand".
 - **Regression test:** `test/detection-challenge.test.ts`, "malformed input … never crashes".
 - **Verification:** failed on `f54c8bd` (`TypeError`); passes now.
@@ -366,6 +379,7 @@ Severity scale:
   `docs/FINAL_REPORT.md`; a stale test reference in `src/sync/prefs.ts`.
 - **Reproduction:** the docs said the quiet time could be set up to 10 minutes. The app offers 5 s to 5 min (the
   database accepts up to 10 min).
+- **Proposed fix:** correct the documents to the range the app offers.
 - **Implemented fix (`2cec5a7`):** corrected in all six places.
 - **Regression test:** none. The accepted range (5–600 s) is pinned by `test/sync.test.ts` and by the database
   constraint tests in `rls.int`. The 5 s–5 min choices offered in Settings are not pinned by any test.
@@ -378,6 +392,7 @@ Severity scale:
   - The policy's "What an account stores" did not mention `updated_by`: a random identifier for the browser that
     last changed the settings, `extension:<id>` or `web:<id>`.
   - The landing page said reminder history stays on the device without the opt-in pilot exception.
+- **Proposed fix:** disclose the identifier and the exception.
 - **Implemented fix (`c306489`):** a row was added to the policy, and the exception was added to the landing page.
 - **Regression test:** `test/disclosure.test.ts` (two tests).
 - **Verification:** failed on `f54c8bd`; passes now.
@@ -430,6 +445,7 @@ Mailpit) in Docker, and Chromium with fake camera and microphone devices under X
 | Browser | `xvfb-run -a npx playwright test` | ✅ **34 passed**: bridge-attack 2, cross-device 3, extension 9, media-lifecycle 8, storage-failure 1, website 11 |
 | Dependencies | `npm audit` and `npm audit --omit=dev` | ✅ 0 vulnerabilities |
 | Secrets | pattern scan of tracked files and built bundles (JWTs, `sb_secret_`, service-role, private keys, cloud keys) | ✅ none; the only bundle matches are supabase-js's own key-prefix check |
+| GitHub Actions | `.github/workflows/ci.yml` on `claude/release-audit` | **Run 17:** `full-stack` ✅ on GitHub's runners (integration tests, all builds, the cross-device, website and bridge-attack browser tests); `test` ❌, because one new audit test read a build output that the unit job does not have (fixed in `a267bad`). **Run 18 (`a267bad`): both jobs ✅** |
 
 **New tests and what they proved.** The "against `f54c8bd`" column comes from two sources:
 - **Re-run at the end of the audit:** the unit tests and the lifecycle and storage-failure suites. The new test
