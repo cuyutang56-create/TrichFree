@@ -6,7 +6,8 @@
 export const STARTUP_GRACE_MS = 90_000;
 /** No processed frame for this long (after the first) means detection has stalled. */
 export const STALL_MS = 15_000;
-/** Sustained frame rate below this is reported as "slow" (dwell timing gets coarse). */
+/** Sustained frame rate below this is reported as "slow" (dwell timing gets coarse). With a lower target
+ *  rate ("lighter detection"), "slow" means well below that target instead. */
 export const SLOW_FPS = 8;
 export const SLOW_FOR_MS = 10_000;
 /** Nobody in view for this long: stop the camera (privacy, battery). */
@@ -23,6 +24,8 @@ export interface HealthInput {
   lastFrameAt: number | null;
   fps: number;
   slowSince: number | null;
+  /** The rate detection is asking for (default 15). */
+  targetFps?: number;
 }
 
 export function deskHealth(i: HealthInput): { status: HealthStatus; slowSince: number | null; reason?: 'no_frames' | 'stalled' } {
@@ -30,7 +33,8 @@ export function deskHealth(i: HealthInput): { status: HealthStatus; slowSince: n
     return i.now - i.attachedAt > STARTUP_GRACE_MS ? { status: 'problem', slowSince: null, reason: 'no_frames' } : { status: 'starting', slowSince: null };
   }
   if (i.now - i.lastFrameAt > STALL_MS) return { status: 'problem', slowSince: null, reason: 'stalled' };
-  const slowSince = i.fps < SLOW_FPS ? i.slowSince ?? i.now : null;
+  const slowFps = Math.min(SLOW_FPS, 0.55 * (i.targetFps ?? 15));
+  const slowSince = i.fps < slowFps ? i.slowSince ?? i.now : null;
   return { status: slowSince != null && i.now - slowSince >= SLOW_FOR_MS ? 'slow' : 'watching', slowSince };
 }
 

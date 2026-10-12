@@ -36,9 +36,11 @@ export function Choices<T extends string>({ legend, value, options, onChange, de
     <fieldset className="choices" aria-describedby={describedBy}>
       <legend className="visually-hidden">{legend}</legend>
       {options.map((o) => (
+        // Name = the title, description = the explanation (read once, after the name).
         <label className="choice" key={o.value}>
-          <input type="radio" name={name} value={o.value} checked={cur === o.value} onChange={() => { setCur(o.value); onChange(o.value); }} />
-          <span><span className="choice-title">{o.title}</span>{o.desc && <span className="choice-desc">{o.desc}</span>}</span>
+          <input type="radio" name={name} value={o.value} checked={cur === o.value} aria-labelledby={`${name}${o.value}-t`}
+            aria-describedby={o.desc ? `${name}${o.value}-d` : undefined} onChange={() => { setCur(o.value); onChange(o.value); }} />
+          <span><span className="choice-title" id={`${name}${o.value}-t`}>{o.title}</span>{o.desc && <span className="choice-desc" id={`${name}${o.value}-d`}>{o.desc}</span>}</span>
         </label>
       ))}
     </fieldset>
@@ -49,9 +51,11 @@ export function Switch({ label, hint, checked, onChange, disabled }: { label: st
   const id = useId();
   const [cur, setCur] = useOptimistic(checked);
   return (
+    // The label wraps the hint too (so clicking either toggles), but the name is the label alone and the hint is
+    // the description: otherwise screen readers read the hint twice.
     <label className="switch" htmlFor={id}>
-      <span className="switch-text"><span>{label}</span>{hint && <small id={`${id}-hint`}>{hint}</small>}</span>
-      <input id={id} type="checkbox" role="switch" checked={cur} disabled={disabled} aria-describedby={hint ? `${id}-hint` : undefined}
+      <span className="switch-text"><span id={`${id}-label`}>{label}</span>{hint && <small id={`${id}-hint`}>{hint}</small>}</span>
+      <input id={id} type="checkbox" role="switch" checked={cur} disabled={disabled} aria-labelledby={`${id}-label`} aria-describedby={hint ? `${id}-hint` : undefined}
         onChange={(e) => { setCur(e.target.checked); onChange(e.target.checked); }} />
     </label>
   );

@@ -65,6 +65,8 @@ export function Settings({ settings, go }: ScreenProps) {
 
       <section className="card" aria-labelledby="adv-h">
         <h2 id="adv-h">Advanced</h2>
+        <Switch label="Lighter detection on this computer" hint="Checks the camera about 8 times a second instead of 15. Uses less processor and battery; a reminder may come a moment later."
+          checked={settings.lighterDetection} onChange={(v) => void updateSettings({ lighterDetection: v })} />
         <Switch label="Show the debug page" hint="Live landmark overlay and a landmark-only recorder for tuning." checked={settings.debug} onChange={(v) => void updateSettings({ debug: v })} />
       </section>
       <Toast text={toast} />

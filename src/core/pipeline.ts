@@ -75,7 +75,7 @@ export class DetectorPipeline {
 
     const { state, events } = temporalStep(
       this.temporal,
-      { t, p: bestP, faceMissing, isPinch: best.isPinch, zone: best.zone, r: best.r },
+      { t, p: bestP, faceMissing, handMissing: frame.hands.length === 0, isPinch: best.isPinch, zone: best.zone, r: best.r },
       this.cfg,
     );
     this.temporal = state;

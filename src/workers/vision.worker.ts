@@ -22,6 +22,23 @@ let emitFrames = false;
 let running = false;
 let initDone: Promise<void> | null = null;
 
+/**
+ * True when WebGL is emulated on the CPU (SwiftShader, llvmpipe, Microsoft Basic Render Driver: no GPU, or
+ * hardware acceleration turned off). There, MediaPipe's own CPU path is faster and uses far less CPU than
+ * running its GPU path through the emulator.
+ */
+function softwareWebGl(): boolean {
+  try {
+    const gl = new OffscreenCanvas(1, 1).getContext('webgl2') as WebGL2RenderingContext | null;
+    if (!gl) return true;
+    const info = gl.getExtension('WEBGL_debug_renderer_info');
+    const renderer = `${gl.getParameter(gl.RENDERER)} ${info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : ''}`;
+    return /swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer);
+  } catch {
+    return false;
+  }
+}
+
 async function createModels(m: Extract<WorkerIn, { type: 'init' }>) {
   const t0 = performance.now();
   // useModule=true: module workers cannot importScripts, so load the ES-module WASM loader.
@@ -44,13 +61,15 @@ async function createModels(m: Extract<WorkerIn, { type: 'init' }>) {
     }));
     return { h, f };
   };
+  const first: 'GPU' | 'CPU' = m.delegate === 'CPU' || m.delegate === 'GPU' ? m.delegate : softwareWebGl() ? 'CPU' : 'GPU';
+  const second = first === 'GPU' ? 'CPU' : 'GPU';
   try {
-    ({ h: hand, f: face } = await make('GPU'));
-    delegate = 'GPU';
+    ({ h: hand, f: face } = await make(first));
+    delegate = first;
   } catch (e) {
-    console.warn('[vision] GPU delegate failed, falling back to CPU', e);
-    ({ h: hand, f: face } = await make('CPU'));
-    delegate = 'CPU';
+    console.warn(`[vision] ${first} delegate failed, falling back to ${second}`, e);
+    ({ h: hand, f: face } = await make(second));
+    delegate = second;
   }
   // Hair segmenter (optional): without it, detection falls back to the position-based zones.
   if (m.hairModel) {

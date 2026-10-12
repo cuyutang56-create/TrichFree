@@ -11,7 +11,11 @@ export interface DetectorConfig {
   dwellMs: number;
   dwellMsPinch: number;
   gapToleranceMs: number;
+  /** Upper bound for the frame-rate-adapted gap tolerance (see temporal.ts). */
+  gapToleranceMaxMs: number;
   handLeftMs: number;
+  /** A frame with no hand this soon after a hand was in a zone counts as a detector miss, not the hand leaving. */
+  handHoldMs: number;
   checkMs: number;
   cooldownMs: number;
   chimeToClipGapMs: number;
@@ -37,7 +41,9 @@ export const DEFAULT_CONFIG: DetectorConfig = {
   dwellMs: 1500,
   dwellMsPinch: 800,
   gapToleranceMs: 300,
+  gapToleranceMaxMs: 700,
   handLeftMs: 1000,
+  handHoldMs: 400,
   checkMs: 10000,
   cooldownMs: 5000,
   chimeToClipGapMs: 250,
@@ -51,6 +57,9 @@ export const DEFAULT_CONFIG: DetectorConfig = {
   weights: { base: 0.55, depthOk: 0.25, depthBad: -0.3, pinch: 0.15, orientation: 0.05, hairBonus: 0.1 },
   strandWeights: { base: 0.3, depthOk: 0.2, depthBad: -0.3, pinch: 0.35, orientation: 0.05 },
 };
+
+/** "Lighter detection" (a per-device setting): fewer frames per second for less processor and battery use. */
+export const LIGHT_FPS = 8;
 
 export const SENSITIVITY: Record<Sensitivity, Pick<DetectorConfig, 'dwellMs' | 'dwellMsPinch' | 'candidateOn' | 'candidateOff'>> = {
   relaxed: { dwellMs: 2500, dwellMsPinch: 1200, candidateOn: 0.7, candidateOff: 0.4 },

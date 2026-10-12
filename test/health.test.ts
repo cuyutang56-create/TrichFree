@@ -23,6 +23,16 @@ describe('desk health', () => {
     expect(deskHealth({ now: 200_000, attachedAt: 0, lastFrameAt: 200_000 - STALL_MS - 1, fps: 15, slowSince: null })).toMatchObject({ status: 'problem', reason: 'stalled' });
   });
 
+  it('lighter detection (8 fps target) running at its target is not "slow"; far below it is', () => {
+    let slowSince: number | null = null;
+    let status = '';
+    for (let t = 100_000; t <= 130_000; t += 1000) ({ slowSince, status } = deskHealth({ now: t, attachedAt: 0, lastFrameAt: t - 100, fps: 7.7, slowSince, targetFps: 8 }));
+    expect(status).toBe('watching');
+    slowSince = null;
+    for (let t = 100_000; t <= 130_000; t += 1000) ({ slowSince, status } = deskHealth({ now: t, attachedAt: 0, lastFrameAt: t - 300, fps: 3, slowSince, targetFps: 8 }));
+    expect(status).toBe('slow');
+  });
+
   it('a short dip is not "slow"', () => {
     const h = deskHealth({ now: 105_000, attachedAt: 0, lastFrameAt: 104_900, fps: 5, slowSince: 100_000 });
     expect(h.status).toBe('watching');

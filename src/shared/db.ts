@@ -68,6 +68,8 @@ export interface AppSettings extends SyncedPrefs {
   pilotEpisodeIndex: number;
   activeCalibrationId?: string;
   debug: boolean;
+  /** Fewer frames per second on this computer (LIGHT_FPS): less processor and battery, slightly later reminders. */
+  lighterDetection: boolean;
   faceMissingPolicy: 'hold';
   personalModel?: PersonalModel | null;
   squeezes: Record<string, number>; // per local date
@@ -86,6 +88,7 @@ export const LOCAL_DEFAULTS: Omit<AppSettings, keyof SyncedPrefs> = {
   pilotSharing: false,
   pilotEpisodeIndex: 0,
   debug: false,
+  lighterDetection: false,
   faceMissingPolicy: 'hold',
   squeezes: {},
   lastLevelSeen: 1,

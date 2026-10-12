@@ -205,3 +205,32 @@ test('service worker restart mid-session: monitoring continues and controls stil
     await ext.context.close();
   }
 });
+
+test('accessibility basics in the extension: no serious axe violations on any page', async () => {
+  const { default: AxeBuilder } = await import('@axe-core/playwright');
+  const ext = await launch();
+  try {
+    const page = await firstPage(ext);
+    const check = async (label: string) => {
+      const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+      const serious = r.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
+      expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`), label).toEqual([]);
+      expect(await page.locator('h1').count(), `${label}: one h1`).toBe(1);
+    };
+    await check('welcome');
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await check('start');
+    await page.getByRole('button', { name: 'Finish without starting' }).click();
+    await page.waitForURL(/#\/home/);
+    for (const route of ['home', 'settings', 'voice', 'insights']) {
+      await page.goto(ext.url(`#/${route}`));
+      await page.waitForTimeout(300);
+      await check(route);
+    }
+    await page.goto(`chrome-extension://${ext.extId}/src/popup/index.html`);
+    const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(r.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical').map((v) => v.id), 'popup').toEqual([]);
+  } finally {
+    await ext.context.close();
+  }
+});

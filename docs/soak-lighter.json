@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-12",
+  "environment": "cloud container: Linux, 4 vCPU Intel Xeon 2.1 GHz, no GPU (WebGL is software-emulated, so the CPU delegate is chosen), headless Chromium 141, fake camera",
+  "minutes": 3,
+  "delegate": "CPU",
+  "lighter": true,
+  "fpsMin": 7.8,
+  "fpsAvg": 8,
+  "cpuOff": 0,
+  "cpuOn": 94,
+  "rssOffMb": 352,
+  "rssOnMb": 543
+}

@@ -1,7 +1,7 @@
 // Offscreen document: owns all real-time state while desk mode is on. Camera → worker → engine → reminder + logs.
 // Offscreen documents only get chrome.runtime, so all chrome.storage / notifications / badge work goes via the SW.
 import { localDate, resolveArm } from '../core/arms';
-import { configFor, type DetectorConfig } from '../core/detectorConfig';
+import { configFor, LIGHT_FPS, type DetectorConfig } from '../core/detectorConfig';
 import { initialEngine, reduce, type Effect, type EngineContext, type EngineEvent, type EngineState } from '../core/engine';
 import { featureVector } from '../core/features';
 import { deskHealth } from '../core/health';
@@ -48,7 +48,9 @@ interface Run {
 let run: Run | null = null;
 let starting: Promise<void> | null = null;
 
-const configOf = (s: AppSettings, calib: Calibration | null) => configFor(s.sensitivity, calib?.extraDwellMs ?? 0, { cooldownMs: s.cooldownSeconds * 1000 });
+const configOf = (s: AppSettings, calib: Calibration | null) => configFor(s.sensitivity, calib?.extraDwellMs ?? 0, {
+  cooldownMs: s.cooldownSeconds * 1000, ...(s.lighterDetection ? { targetFps: LIGHT_FPS } : {}),
+});
 
 // ---------- lifecycle ----------
 
@@ -322,7 +324,7 @@ function statusTick() {
   if (!r) return;
   const fps = r.stats?.fps ?? 0;
   if (r.status === 'starting' || r.status === 'watching' || r.status === 'slow' || r.status === 'problem') {
-    const h = deskHealth({ now: Date.now(), attachedAt: r.attachedAt, lastFrameAt: r.lastFrameAt, fps, slowSince: r.slowSince });
+    const h = deskHealth({ now: Date.now(), attachedAt: r.attachedAt, lastFrameAt: r.lastFrameAt, fps, slowSince: r.slowSince, targetFps: r.cfg.targetFps });
     r.slowSince = h.slowSince;
     r.status = h.status;
     r.errorKind = h.status === 'problem' ? (h.reason === 'no_frames' ? 'models' : 'stalled') : undefined;

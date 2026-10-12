@@ -12,6 +12,8 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "replay": "tsx scripts/replay.ts",
+    "evaluate": "tsx scripts/evaluate.ts",
+    "soak": "node scripts/soak.mjs",
     "fixtures": "node scripts/make-fixtures.mjs",
     "package": "npm run build && node scripts/package.mjs",
     "typecheck": "tsc --noEmit",

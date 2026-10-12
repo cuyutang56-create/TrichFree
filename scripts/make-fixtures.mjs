@@ -57,7 +57,13 @@ function hand({ tip, dir, scale, pinch, hair }, r) {
 }
 
 const lerp = (a, b, k) => a + (b - a) * k;
-function scenario(name, durationS, handAt, expect, zones = ['crown', 'hairline', 'brows', 'lashes']) {
+/**
+ * @param expect.alerts what the current detector should produce
+ * @param extra.category 'positive' (should remind), 'negative' (should stay quiet) or 'limitation' (ordinary
+ *   touching that the detector cannot tell from a reach: kept as an honest, known false positive)
+ * @param extra.onsetMs when the hand arrives at the hair (for latency), positives only
+ */
+function scenario(name, durationS, handAt, expect, zones = ['crown', 'hairline', 'brows', 'lashes'], extra = {}) {
   const r = rng(name.length * 7919);
   const frames = [];
   for (let k = 0; k < durationS * FPS; k++) {
@@ -66,7 +72,7 @@ function scenario(name, durationS, handAt, expect, zones = ['crown', 'hairline',
     const h = handAt(t / 1000);
     frames.push({ t, width: W, height: H, hands: h ? [hand(h, r)] : [], face: faceRan ? face(r) : null, faceRan });
   }
-  return { meta: { name, width: W, height: H, fps: FPS, zones, expect }, frames };
+  return { meta: { name, width: W, height: H, fps: FPS, zones, expect, ...extra }, frames };
 }
 
 const UP = Math.PI / 2;
@@ -77,26 +83,46 @@ const fixtures = [
     if (s < 1.5) { const k = (s - 1) / 0.5; return { tip: [0.15, lerp(-0.9, 0.85, k)], dir: UP, scale: 0.65, pinch: false }; }
     if (s > 5.5) { const k = (s - 5.5) / 0.5; return { tip: [0.15, lerp(0.85, -1.2, k)], dir: UP, scale: 0.65, pinch: false }; }
     return { tip: [0.15 + 0.01 * Math.sin(s * 20), 0.85], dir: UP - 0.3, scale: 0.65, pinch: true };
-  }, { alerts: 1 }),
+  }, { alerts: 1 }, undefined, { category: 'positive', onsetMs: 1500 }),
   // Chin resting on the hand: tips below the chin, never in an enabled zone.
-  scenario('chin-rest', 8, (s) => (s < 1 || s > 7 ? null : { tip: [0.05, -0.92], dir: UP, scale: 0.7, pinch: false }), { alerts: 0 }),
+  scenario('chin-rest', 8, (s) => (s < 1 || s > 7 ? null : { tip: [0.05, -0.92], dir: UP, scale: 0.7, pinch: false }), { alerts: 0 }, undefined, { category: 'negative' }),
   // Drinking from a cup: hand close to the camera (large r), fingertips reaching up to lash height.
   scenario('drinking-cup', 8, (s) => {
     if (s < 1 || s > 6) return null;
     return { tip: [0.12, lerp(-0.45, 0.05, Math.min(1, (s - 1) / 1.5))], dir: UP + 0.2, scale: 1.2, pinch: false };
-  }, { alerts: 0 }),
+  }, { alerts: 0 }, undefined, { category: 'negative' }),
   // Adjusting glasses: brief (0.7 s) touches at the lash line / bridge, twice.
   scenario('glasses-adjust', 8, (s) => {
     const touch = (s > 1 && s < 1.7) || (s > 4 && s < 4.7);
     return touch ? { tip: [0.12, 0.04], dir: UP, scale: 0.65, pinch: false } : null;
-  }, { alerts: 0 }),
+  }, { alerts: 0 }, undefined, { category: 'negative' }),
   // Pinching a lock of long hair beside the face at mouth height (outside every scalp zone): hair contact drives it.
   scenario('pinch-strand', 8, (s) => {
     if (s < 1 || s > 6) return null;
     return { tip: [-1.15 + 0.01 * Math.sin(s * 25), -0.6], dir: UP + 0.4, scale: 0.63, pinch: true, hair: 0.6 };
-  }, { alerts: 1 }, ['crown', 'hairline', 'strands']),
+  }, { alerts: 1 }, ['crown', 'hairline', 'strands'], { category: 'positive', onsetMs: 1000 }),
   // Chin resting on an open hand with long hair falling nearby: hair around the fingers but no pinch → no alert.
-  scenario('chin-rest-long-hair', 8, (s) => (s < 1 || s > 7 ? null : { tip: [-0.35, -0.92], dir: UP, scale: 0.7, pinch: false, hair: 0.4 }), { alerts: 0 }, ['crown', 'hairline', 'strands']),
+  scenario('chin-rest-long-hair', 8, (s) => (s < 1 || s > 7 ? null : { tip: [-0.35, -0.92], dir: UP, scale: 0.7, pinch: false, hair: 0.4 }), { alerts: 0 }, ['crown', 'hairline', 'strands'], { category: 'negative' }),
+  // Open hand resting at the front hairline (no pinch) for 3 s: the slower, non-pinch dwell applies.
+  scenario('reach-hairline-open', 7, (s) => (s < 1 || s > 4 ? null : { tip: [0.05 + 0.01 * Math.sin(s * 9), 0.6], dir: UP, scale: 0.66, pinch: false }), { alerts: 1 },
+    ['crown', 'hairline', 'strands'], { category: 'positive', onsetMs: 1000 }),
+  // Fingers at the temple (sides zone), pinching.
+  scenario('pinch-at-temple', 7, (s) => (s < 1 || s > 4.5 ? null : { tip: [0.82, 0.3], dir: UP - 0.6, scale: 0.64, pinch: true }), { alerts: 1 },
+    ['crown', 'hairline', 'sides'], { category: 'positive', onsetMs: 1000 }),
+  // A brief touch at the crown (0.5 s), shorter than any dwell: no reminder.
+  scenario('brief-touch-crown', 6, (s) => (s < 1 || s > 1.5 ? null : { tip: [0.15, 0.85], dir: UP - 0.3, scale: 0.65, pinch: true }), { alerts: 0 }, undefined, { category: 'negative' }),
+  // Three separate reaches, 3 s each, 7 s apart: one reminder each with a 5 s cooldown, one in total with 30 s.
+  scenario('three-reaches', 26, (s) => {
+    const inReach = [1, 11, 21].some((a) => s >= a && s < a + 3);
+    return inReach ? { tip: [0.15, 0.85], dir: UP - 0.3, scale: 0.65, pinch: true } : null;
+  }, { alerts: 3 }, undefined, { category: 'positive', onsetMs: 1000 }),
+  // A hand that keeps drifting back to the hairline for 40 s (2 s in, 1.2 s out). The "alert loop" case:
+  // a 5 s cooldown re-reminds about every 10 s; the default 30 s quiet time keeps it to a couple.
+  scenario('hover-boundary', 42, (s) => (s < 1 || s > 41 ? null : { tip: [0.05, ((s - 1) % 3.2) < 2 ? 0.6 : 0.2], dir: UP, scale: 0.66, pinch: false }), { alerts: 4 },
+    ['crown', 'hairline'], { category: 'loop' }),
+  // Scratching the scalp with an open hand for 3 s. From landmarks alone this looks like a reach: a known false positive.
+  scenario('scratch-scalp', 7, (s) => (s < 1 || s > 4 ? null : { tip: [0.1 + 0.05 * Math.sin(s * 30), 0.95 + 0.04 * Math.sin(s * 23)], dir: UP - 0.2, scale: 0.66, pinch: false }), { alerts: 1 },
+    undefined, { category: 'limitation' }),
 ];
 
 mkdirSync('test/fixtures', { recursive: true });

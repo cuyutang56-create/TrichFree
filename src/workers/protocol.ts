@@ -4,7 +4,8 @@ import type { Calibration, DetectorEvent, ZoneId } from '../core/types';
 import type { OverlayFrame } from '../shared/messages';
 
 export type WorkerIn =
-  | { type: 'init'; wasmBase: string; handModel: string; faceModel: string; hairModel?: string; cfg: DetectorConfig; calib: Calibration | null; zones: ZoneId[]; emitFrames: boolean }
+  /** delegate: 'auto' (default) picks CPU when WebGL is software-emulated, else GPU; either falls back to the other. */
+  | { type: 'init'; wasmBase: string; handModel: string; faceModel: string; hairModel?: string; cfg: DetectorConfig; calib: Calibration | null; zones: ZoneId[]; emitFrames: boolean; delegate?: 'auto' | 'GPU' | 'CPU' }
   | { type: 'stream'; readable: ReadableStream<VideoFrame> }
   /** Fallback for browsers without MediaStreamTrackProcessor: one frame at a time. */
   | { type: 'bitmap'; bitmap: ImageBitmap }

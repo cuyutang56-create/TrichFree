@@ -5,8 +5,11 @@ import { runReplay, type LandmarkRecording } from '../src/core/replay';
 const files = readdirSync('test/fixtures').filter((f) => f.endsWith('.json'));
 
 describe('replay fixtures', () => {
-  it('ships the four synthetic fixtures', () => {
-    expect(files.sort()).toEqual(['chin-rest-long-hair.json', 'chin-rest.json', 'drinking-cup.json', 'glasses-adjust.json', 'pinch-at-crown.json', 'pinch-strand.json']);
+  it('ships the synthetic fixtures (regenerate with npm run fixtures)', () => {
+    expect(files.sort()).toEqual([
+      'brief-touch-crown.json', 'chin-rest-long-hair.json', 'chin-rest.json', 'drinking-cup.json', 'glasses-adjust.json', 'hover-boundary.json',
+      'pinch-at-crown.json', 'pinch-at-temple.json', 'pinch-strand.json', 'reach-hairline-open.json', 'scratch-scalp.json', 'three-reaches.json',
+    ]);
   });
   for (const f of files) {
     it(`${f} produces the expected events`, () => {
