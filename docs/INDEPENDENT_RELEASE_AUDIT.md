@@ -315,9 +315,11 @@ Severity scale:
 - **Reproduction:**
   1. Record, then Save.
   2. Make IndexedDB writes to `clips` fail (`QuotaExceededError`, as on a full disk).
-  3. Re-record and Save: nothing is shown, and the new recording is gone.
+  3. Re-record and Save: no message appears. The Save button seems to do nothing, and the new recording is not
+     stored; it is lost when the user leaves the page.
 - **Root cause:** the save transaction's rejection was not handled.
-- **Impact:** a user believes their own-voice reminder was saved. The old recording was safe (same transaction).
+- **Impact:** a user can believe their new own-voice reminder was saved. The old recording was safe (same
+  transaction).
 - **Implemented fix (`2cec5a7`):**
   - Show "This recording could not be saved[: the computer seems to be out of storage space]. Your earlier
     recording is unchanged…".
@@ -341,8 +343,8 @@ Severity scale:
   - the end-to-end test key.
 
   `--allow-local` overrides it, explicitly.
-- **Regression test:** `test/release-check.test.ts` (5 tests). It includes a check that the real end-to-end test
-  manifest is refused.
+- **Regression test:** `test/release-check.test.ts` (5 tests). It includes a check that the manifest generated
+  from the end-to-end build's settings is refused for all three reasons.
 - **Verification:** passes. On `f54c8bd` the test cannot run, because the guard did not exist; the previous
   `package.mjs` had no check at all.
 
@@ -365,8 +367,8 @@ Severity scale:
 - **Reproduction:** the docs said the quiet time could be set up to 10 minutes. The app offers 5 s to 5 min (the
   database accepts up to 10 min).
 - **Implemented fix (`2cec5a7`):** corrected in all six places.
-- **Regression test:** none. The values are pinned by the existing preference-validation tests
-  (`test/sync.test.ts`, `rls.int` constraints).
+- **Regression test:** none. The accepted range (5–600 s) is pinned by `test/sync.test.ts` and by the database
+  constraint tests in `rls.int`. The 5 s–5 min choices offered in Settings are not pinned by any test.
 - **Verification:** re-read against `src/app/screens/Settings.tsx` options and the SQL `CHECK`.
 
 ### F-11 · Low (documentation) · Account device identifier and pilot exception not disclosed

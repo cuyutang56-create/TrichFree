@@ -1,11 +1,14 @@
 // Release audit: a build made with local or test settings must not be packaged for release.
-import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { afterEach, describe, expect, it } from 'vitest';
+import manifest from '../manifest.config';
 // @ts-expect-error plain .mjs helper without type declarations
 import { releaseProblems } from '../scripts/release-check.mjs';
 
 const testKey = readFileSync('e2e/fixtures/extension-key.pub.b64', 'utf8').trim();
 const csp = (connect: string) => ({ extension_pages: `default-src 'self'; ${connect}; object-src 'none'` });
+const FILE = '.env.releasechecktest';
+afterEach(() => rmSync(FILE, { force: true }));
 const prod = {
   host_permissions: ['https://abcd.supabase.co/*'],
   externally_connectable: { matches: ['https://trichfree.example/*'] },
@@ -33,8 +36,13 @@ describe('release check', () => {
     expect(other.problems).toEqual([]);
     expect(other.notes.join(' ')).toMatch(/pilot installs only/);
   });
-  it('the E2E build (local stack, dev bridge, test key) would be refused', () => {
-    const e2e = JSON.parse(readFileSync('dist-e2e/manifest.json', 'utf8'));
-    expect(releaseProblems(e2e, { testKeyId: testKey }).problems.length).toBeGreaterThanOrEqual(3);
+  it('the end-to-end build settings (local stack, dev bridge, test key) would be refused', async () => {
+    // The manifest generated from the values scripts/build-e2e.mjs builds with (no build output needed).
+    writeFileSync(FILE, `VITE_SUPABASE_URL=http://127.0.0.1:54321\nVITE_SITE_URL=http://127.0.0.1:5174\nVITE_DEV_BRIDGE=true\nEXTENSION_PUBLIC_KEY=${testKey}\n`);
+    const e2e = await (manifest as unknown as (env: { mode: string; command: string }) => Promise<object> | object)({ mode: 'releasechecktest', command: 'build' });
+    const problems = releaseProblems(e2e, { testKeyId: testKey }).problems.join(' | ');
+    expect(problems).toMatch(/local origin/);
+    expect(problems).toMatch(/local backend/);
+    expect(problems).toMatch(/automated-test key/);
   });
 });
