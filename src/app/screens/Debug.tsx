@@ -76,8 +76,8 @@ export function Debug({ settings }: ScreenProps) {
           </div>
           <div className="card">
             {recording
-              ? <><p>Recording… {Math.round((Date.now() - recording.start) / 1000)} s / 60 s ({recording.frames.length} frames)</p><button onClick={finish}>Stop now</button></>
-              : <button className="primary" disabled={!v.ready} onClick={() => setRecording({ start: Date.now(), frames: [] })}>Record 60 s</button>}
+              ? <><p>Recording… {Math.round((Date.now() - recording.start) / 1000)} s / 60 s ({recording.frames.length} frames)</p><button className="btn" onClick={finish}>Stop now</button></>
+              : <button className="btn primary" disabled={!v.ready} onClick={() => setRecording({ start: Date.now(), frames: [] })}>Record 60 s</button>}
           </div>
           <div className="card small"><h3>Detector events</h3>{events.length ? events.map((e, i) => <div key={i}>{e}</div>) : <span className="muted">None yet</span>}</div>
         </div>
@@ -88,8 +88,8 @@ export function Debug({ settings }: ScreenProps) {
         {records.map((r) => (
           <div className="row small" key={r.id} style={{ padding: '4px 0' }}>
             <span>{r.name} · {r.frames.length} frames</span><span className="spacer" />
-            <button onClick={() => download(r)}>Download</button>
-            <button className="ghost" onClick={async () => { await db.landmarkRecords.delete(r.id); await reload(); }}>Delete</button>
+            <button className="btn" onClick={() => download(r)}>Download</button>
+            <button className="btn ghost" onClick={async () => { await db.landmarkRecords.delete(r.id); await reload(); }}>Delete</button>
           </div>
         ))}
       </div>

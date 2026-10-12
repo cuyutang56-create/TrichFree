@@ -92,10 +92,11 @@ export type DetectorEvent =
   | { type: 'alertThresholdReached'; t: number; stats: EpisodeStats }
   | { type: 'handLeft'; t: number; leftAt: number; stats: EpisodeStats };
 
-export type Arm = 'SILENT' | 'CHIME' | 'VOICE' | 'FORCED_CHIME';
+// VISUAL: the user chose a visual-only reminder (no sound). Like FORCED_CHIME it never uses a pilot block slot.
+export type Arm = 'SILENT' | 'CHIME' | 'VOICE' | 'FORCED_CHIME' | 'VISUAL';
 export type Outcome = 'brief_touch' | 'interrupted' | 'interrupted_after_2' | 'not_interrupted' | 'false_alarm';
 export type ClipCategory = 'notice' | 'need' | 'instead' | 'reason' | 'compassion' | 'custom';
-export type OutputMode = 'speakers' | 'earbuds' | 'chime_only' | 'silent_log';
+export type OutputMode = 'speakers' | 'earbuds' | 'chime_only' | 'visual' | 'silent_log';
 export type Sensitivity = 'relaxed' | 'balanced' | 'sensitive';
 
 export interface ClipMeta {

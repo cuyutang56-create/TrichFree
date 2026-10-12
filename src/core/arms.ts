@@ -74,10 +74,12 @@ export function resolveArm(ctx: ArmContext): { arm: Arm; pilotDay?: number; cons
     if (phase === 'baseline') return { arm: 'SILENT', pilotDay: day, consumesIndex: false };
     if (ctx.outputMode === 'silent_log') return { arm: 'SILENT', pilotDay: day, consumesIndex: false };
     if (ctx.outputMode === 'chime_only') return { arm: 'FORCED_CHIME', pilotDay: day, consumesIndex: false };
+    if (ctx.outputMode === 'visual') return { arm: 'VISUAL', pilotDay: day, consumesIndex: false };
     if (phase === 'randomised') return { arm: randomisedArm(ctx.pilot.code, ctx.pilot.nextIndex), pilotDay: day, consumesIndex: true };
     return { arm: 'VOICE', pilotDay: day, consumesIndex: false };
   }
   if (ctx.outputMode === 'silent_log') return { arm: 'SILENT', consumesIndex: false };
   if (ctx.outputMode === 'chime_only') return { arm: 'FORCED_CHIME', consumesIndex: false };
+  if (ctx.outputMode === 'visual') return { arm: 'VISUAL', consumesIndex: false };
   return { arm: 'VOICE', consumesIndex: false };
 }

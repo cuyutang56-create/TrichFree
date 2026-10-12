@@ -9,9 +9,9 @@ const clips: ClipMeta[] = [
   { id: 'r', category: 'reason', createdAt: 3, playCount: 0 },
   { id: 'c', category: 'compassion', createdAt: 4, playCount: 0 },
 ];
-function ctx(arm: Arm = 'VOICE'): EngineContext {
+function ctx(arm: Arm = 'VOICE', followUp = true): EngineContext {
   let n = 0;
-  return { sessionId: 's', decideArm: () => ({ arm }), clips, checkMs: 10000, cooldownMs: 5000, chimeMs: 400, chimeToClipGapMs: 250, newId: () => `e${++n}` };
+  return { sessionId: 's', decideArm: () => ({ arm }), clips, checkMs: 10000, cooldownMs: 5000, followUp, chimeMs: 400, chimeToClipGapMs: 250, newId: () => `e${++n}` };
 }
 
 class Harness {
@@ -92,10 +92,34 @@ describe('engine', () => {
     const h = new Harness(ctx('CHIME')).to('ALERT_2');
     expect(h.plays()).toEqual([{ type: 'play', sound: 'chime' }, { type: 'play', sound: 'chime' }]);
   });
-  it('SILENT arm: no sound, still logged', () => {
+  it('SILENT arm: no sound and no on-screen cue (pilot baseline / "off"), still logged', () => {
     const h = new Harness(ctx('SILENT')).to('COOLDOWN');
     expect(h.plays()).toHaveLength(0);
+    expect(h.effects.filter((e) => e.type === 'notifyAlert')).toHaveLength(0);
     expect(h.episodes()[0].arm).toBe('SILENT');
+  });
+  it('VISUAL arm: never a sound; an on-screen cue at ALERT_1 and one follow-up at ALERT_2', () => {
+    const h = new Harness(ctx('VISUAL')).to('PERSIST');
+    expect(h.plays()).toHaveLength(0);
+    expect(h.effects.filter((e) => e.type === 'notifyAlert').map((e) => (e as { alertNo: number }).alertNo)).toEqual([1, 2]);
+  });
+  it('follow-up off: one cue, then quiet until the hand leaves', () => {
+    const h = new Harness(ctx('VOICE', false)).to('ALERT_1');
+    const plays = h.plays().length;
+    h.send({ type: 'tick', t: 11500 }, 11500);
+    expect(h.phase).toBe('PERSIST');
+    for (let t = 12000; t <= 60000; t += 1000) h.send({ type: 'tick', t }, t);
+    expect(h.plays().length).toBe(plays);
+    h.send({ type: 'handLeft', t: 61000, leftAt: 60500, stats }, 61000);
+    expect(h.episodes()[0].outcome).toBe('not_interrupted');
+  });
+  it('a continuous gesture gets at most two cues, however long it lasts (no alert loop)', () => {
+    for (const followUp of [true, false]) {
+      const h = new Harness(ctx('CHIME', followUp)).to('ALERT_1');
+      for (let t = 2000; t <= 300_000; t += 250) h.send({ type: 'tick', t }, t);
+      expect(h.plays().length).toBe(followUp ? 2 : 1);
+      expect(h.effects.filter((e) => e.type === 'notifyAlert')).toHaveLength(1);
+    }
   });
   it('never repeats the previous clip', () => {
     const h = new Harness().to('ALERT_2');

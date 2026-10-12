@@ -1,7 +1,7 @@
 // Mochi's voice. Two registers, on purpose:
-//  · SASS is only ever about showing up (streaks, reminders, sessions). That's Duo's charm, aimed somewhere safe.
+//  · PLAYFUL (teasing) is only ever about showing up (streaks, reminders, sessions). That's Duo's charm, aimed somewhere safe.
 //  · About pulling, Mochi is always plain and kind, whatever tone the user picked. No jokes, no guilt.
-export type Tone = 'sassy' | 'gentle';
+export type Tone = 'playful' | 'gentle';
 export type LineKind =
   | 'hello' | 'reminder' | 'sessionStart' | 'sessionEnd' | 'streakSaved' | 'freezeUsed'
   | 'afterCatch' | 'afterPull' | 'afterNotPull' | 'levelUp' | 'idle' | 'reminderFresh';
@@ -10,7 +10,7 @@ type Ctx = { streak?: number; minutes?: number; flavour?: string };
 
 const LINES: Record<LineKind, Record<Tone, ((c: Ctx) => string)[]>> = {
   hello: {
-    sassy: [
+    playful: [
       () => "Oh, you're here. I was absolutely not waiting by the door.",
       (c) => c.streak ? `${c.streak}-day streak. Not to brag, but I carried some of that.` : 'New day. Clean slate. I fluffed myself for this.',
       () => "Desk time? I'll guard the hair. You guard the deadline.",
@@ -22,7 +22,7 @@ const LINES: Record<LineKind, Record<Tone, ((c: Ctx) => string)[]>> = {
     ],
   },
   reminder: {
-    sassy: [
+    playful: [
       (c) => `Your ${c.streak}-day streak is looking at me. I'm looking at you. Desk session?`,
       (c) => `Not to be dramatic, but our ${c.streak}-day streak ends at midnight. Ten minutes. That's all I ask.`,
       () => "I've been sitting here all day. Squishy. Unbothered. Mildly abandoned.",
@@ -34,44 +34,44 @@ const LINES: Record<LineKind, Record<Tone, ((c: Ctx) => string)[]>> = {
     ],
   },
   reminderFresh: {
-    sassy: [() => "I've been sitting here all day. Squishy. Unbothered. Mildly abandoned. Ten minutes?", () => 'A streak starts with one desk session. I’m just saying. Loudly.'],
+    playful: [() => "I've been sitting here all day. Squishy. Unbothered. Mildly abandoned. Ten minutes?", () => 'A streak starts with one desk session. I’m just saying. Loudly.'],
     gentle: [() => 'Got ten minutes? I can keep you company.', () => 'Whenever you’re ready, I’m here.'],
   },
   sessionStart: {
-    sassy: [() => "Okay. You study, I watch the hair. Nobody touches the hair.", () => "Session on. I'm in my focus era."],
+    playful: [() => "Okay. You study, I watch the hair. Nobody touches the hair.", () => "Session on. I'm in my focus era."],
     gentle: [() => "I'm watching quietly. Focus on your work.", () => "Here with you. Take your time."],
   },
   sessionEnd: {
-    sassy: [(c) => `${c.minutes} minutes. Look at us, being functional.`, () => 'Session done. I need a nap and so do you.'],
+    playful: [(c) => `${c.minutes} minutes. Look at us, being functional.`, () => 'Session done. I need a nap and so do you.'],
     gentle: [(c) => `${c.minutes} minutes together. Thank you for showing up.`, () => 'Nice session. Rest a little.'],
   },
   streakSaved: {
-    sassy: [(c) => `Streak: ${c.streak}. Saved. You may now go about your day.`],
+    playful: [(c) => `Streak: ${c.streak}. Saved. You may now go about your day.`],
     gentle: [(c) => `That's ${c.streak} days. Well done for showing up.`],
   },
   freezeUsed: {
-    sassy: [() => "You missed a day. I used a streak freeze. You're welcome. Don't make it a habit."],
+    playful: [() => "You missed a day. I used a streak freeze. You're welcome. Don't make it a habit."],
     gentle: [() => 'You missed a day, so a streak freeze kept your streak safe. Rest days are allowed.'],
   },
   afterCatch: {
-    sassy: [() => 'Hands down. Iconic.', () => 'You heard it, you did it. That was all you.'],
+    playful: [() => 'Hands down. Iconic.', () => 'You heard it, you did it. That was all you.'],
     gentle: [() => 'You noticed, and you chose. That was all you.', () => 'Hands down. Nicely done.'],
   },
   // Never sass here, whatever the tone setting says.
   afterPull: {
-    sassy: [() => "Thanks for telling me. One moment doesn't undo anything. Hands down, keep going."],
+    playful: [() => "Thanks for telling me. One moment doesn't undo anything. Hands down, keep going."],
     gentle: [() => "Thanks for telling me. One moment doesn't undo anything. Hands down, keep going."],
   },
   afterNotPull: {
-    sassy: [() => "My bad. Noted. I'm learning your hands.", () => 'False alarm, got it. I’ll know better next time.'],
+    playful: [() => "My bad. Noted. I'm learning your hands.", () => 'False alarm, got it. I’ll know better next time.'],
     gentle: [() => "Thanks, that helps me learn your hands.", () => 'Got it. I’ll remember that one.'],
   },
   levelUp: {
-    sassy: [(c) => `New flavour unlocked: ${c.flavour}. I look incredible.`],
+    playful: [(c) => `New flavour unlocked: ${c.flavour}. I look incredible.`],
     gentle: [(c) => `You unlocked ${c.flavour} Mochi. Thank you for sticking with it.`],
   },
   idle: {
-    sassy: [() => 'Squeeze me. I dare you.', () => "I'm a stress ball with opinions.", () => 'Hands busy, hair safe. Squish.'],
+    playful: [() => 'Squeeze me. I dare you.', () => "I'm a stress ball with opinions.", () => 'Hands busy, hair safe. Squish.'],
     gentle: [() => 'Squeeze me when your hands need something to do.', () => 'Hands busy, hair safe.'],
   },
 };

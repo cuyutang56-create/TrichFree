@@ -1,16 +1,17 @@
-// Offscreen document: owns all real-time state while desk mode is on. Camera → worker → engine → audio + logs.
+// Offscreen document: owns all real-time state while desk mode is on. Camera → worker → engine → reminder + logs.
 // Offscreen documents only get chrome.runtime, so all chrome.storage / notifications / badge work goes via the SW.
 import { localDate, resolveArm } from '../core/arms';
 import { configFor, type DetectorConfig } from '../core/detectorConfig';
 import { initialEngine, reduce, type Effect, type EngineContext, type EngineEvent, type EngineState } from '../core/engine';
 import { featureVector } from '../core/features';
-import type { ClipMeta, DetectorEvent, Episode } from '../core/types';
-import { activeCalibration, db, getSettings, setSettings, uid, type AppSettings, type EventRow, type SessionRow } from '../shared/db';
-import { on, send, type DeskStatus, type OverlayFrame } from '../shared/messages';
+import { deskHealth } from '../core/health';
+import type { Calibration, ClipMeta, DetectorEvent, Episode } from '../core/types';
+import { activeCalibration, db, getSettings, outputModeOf, setSettings, uid, type AppSettings, type EventRow, type SessionRow } from '../shared/db';
+import { on, send, type DeskErrorKind, type DeskStatus, type OverlayFrame } from '../shared/messages';
 import { enqueue, flush, sharingEnabled } from '../shared/uploadQueue';
 import { episodeRow, eventRow, sessionRow } from '../shared/telemetry';
 import { openCamera, VisionClient } from '../shared/visionClient';
-import type { WorkerStats } from '../workers/protocol';
+import type { WorkerOut, WorkerStats } from '../workers/protocol';
 import { CHIME_MS, Player } from './player';
 import { maybeRetrain } from '../shared/personalModel';
 
@@ -26,12 +27,16 @@ interface Run {
   stats: WorkerStats | null;
   status: DeskStatus;
   error?: string;
+  errorKind?: DeskErrorKind;
   today: { detections: number; interrupted: number };
   fpsSamples: number[];
   faceSeconds: number;
   slowSince: number | null;
-  problemSince: number | null;
   slowWarned: boolean;
+  attachedAt: number;
+  lastFrameAt: number | null;
+  lastFaceAt: number | undefined;
+  alertCount: number;
   cameraRetry: { until: number; timer: number } | null;
   timers: number[];
   featureRing: { t: number; x: number[] }[];
@@ -43,31 +48,34 @@ interface Run {
 let run: Run | null = null;
 let starting: Promise<void> | null = null;
 
+const configOf = (s: AppSettings, calib: Calibration | null) => configFor(s.sensitivity, calib?.extraDwellMs ?? 0, { cooldownMs: s.cooldownSeconds * 1000 });
+
 // ---------- lifecycle ----------
 
 async function start() {
   if (run) return;
   const settings = await getSettings();
   const calib = await activeCalibration(settings);
-  const cfg = configFor(settings.sensitivity, calib?.extraDwellMs ?? 0);
+  const cfg = configOf(settings, calib);
   const clipRows = await db.clips.toArray();
-  const player = new Player();
+  const player = new Player(settings.chimeVolume / 100);
   await player.load(clipRows);
   await player.resume();
 
   const session: SessionRow = {
-    id: uid(), participantCode: settings.participantCode, startedAt: Date.now(), deskMinutes: 0, fpsAvg: 0, outputMode: settings.outputMode,
+    id: uid(), participantCode: settings.participantCode, startedAt: Date.now(), deskMinutes: 0, fpsAvg: 0, outputMode: outputModeOf(settings.intervention),
   };
   await db.sessions.put(session);
 
   const clips: ClipMeta[] = clipRows.filter((c) => player.has(c.id)).map(({ id, category, createdAt, lastPlayedAt, playCount }) => ({ id, category, createdAt, lastPlayedAt, playCount }));
   const r: Run = {
     settings, cfg, stream: null, vision: null, player, engine: initialEngine(), session, stats: null, status: 'starting',
-    today: await todayCounts(), fpsSamples: [], faceSeconds: 0, slowSince: null, problemSince: null, slowWarned: false,
+    today: await todayCounts(), fpsSamples: [], faceSeconds: 0, slowSince: null, slowWarned: false,
+    attachedAt: Date.now(), lastFrameAt: null, lastFaceAt: undefined, alertCount: 0,
     cameraRetry: null, timers: [], featureRing: [], overlayUntil: 0, lastOverlayPost: 0, pendingAlertAt: null,
     ctx: {
       sessionId: session.id, participantCode: settings.participantCode, clips,
-      checkMs: cfg.checkMs, cooldownMs: cfg.cooldownMs, chimeMs: CHIME_MS, chimeToClipGapMs: cfg.chimeToClipGapMs,
+      checkMs: cfg.checkMs, cooldownMs: cfg.cooldownMs, followUp: settings.followUp, chimeMs: CHIME_MS, chimeToClipGapMs: cfg.chimeToClipGapMs,
       newId: uid,
       decideArm: () => decideArm(),
     },
@@ -117,12 +125,25 @@ async function attachCamera(): Promise<boolean> {
     track.addEventListener('mute', () => { if (run === r) { setStatus('camera_busy'); logEvent('camera_busy'); } });
     track.addEventListener('unmute', () => { if (run === r) setStatus('watching'); });
     r.vision!.attach(track);
+    r.attachedAt = Date.now();
+    r.lastFrameAt = null;
     if (r.cameraRetry) { clearInterval(r.cameraRetry.timer); r.cameraRetry = null; logEvent('camera_restored'); }
-    setStatus('watching');
+    setStatus('starting');
     return true;
   } catch (e) {
     const name = (e as DOMException).name;
-    if (name === 'NotAllowedError') { r.error = 'Camera permission is needed. Open TrichFree and allow the camera.'; setStatus('error'); return false; }
+    if (name === 'NotAllowedError' || name === 'SecurityError') {
+      r.error = 'TrichFree needs permission to use the camera. Open TrichFree and allow the camera.';
+      r.errorKind = 'camera_permission';
+      setStatus('error');
+      return false;
+    }
+    if (name === 'NotFoundError' || name === 'OverconstrainedError') {
+      r.error = 'No camera was found. Connect a camera and start again.';
+      r.errorKind = 'camera_unavailable';
+      setStatus('error');
+      return false;
+    }
     onCameraLost(name || 'getUserMedia failed');
     return false;
   }
@@ -161,7 +182,7 @@ function onCameraLost(reason: string) {
 
 // ---------- worker → engine ----------
 
-function onWorker(m: import('../workers/protocol').WorkerOut) {
+function onWorker(m: WorkerOut) {
   const r = run;
   if (!r) return;
   switch (m.type) {
@@ -182,16 +203,22 @@ function onWorker(m: import('../workers/protocol').WorkerOut) {
       break;
     case 'error':
       console.warn('[offscreen] worker', m.message);
-      if (m.message.startsWith('model load')) { r.error = m.message; setStatus('error'); }
+      if (m.message.startsWith('model load')) {
+        r.error = 'The on-device detector could not load. Try restarting TrichFree.';
+        r.errorKind = 'models';
+        setStatus('error');
+      }
       break;
   }
 }
 
 function onFrame(r: Run, d: OverlayFrame) {
+  const now = Date.now();
+  r.lastFrameAt = now;
+  if (d.frame.face) r.lastFaceAt = now;
   // Keep ~5 s of feature vectors for feedback labels (Section 4.8). Never pixels.
   r.featureRing.push({ t: d.frame.t, x: featureVector(d.features, d.pSmooth) });
   while (r.featureRing.length && d.frame.t - r.featureRing[0].t > 5000) r.featureRing.shift();
-  const now = Date.now();
   if (now < r.overlayUntil && now - r.lastOverlayPost > 90) {
     r.lastOverlayPost = now;
     send({ target: 'ui', type: 'OVERLAY', data: { ...d, enginePhase: r.engine.phase } });
@@ -204,7 +231,7 @@ function decideArm() {
   const pilot = s.participantCode && s.pilotConsent && s.enrolledDate
     ? { code: s.participantCode, enrolledDate: s.enrolledDate, nextIndex: s.pilotEpisodeIndex, baselineDays: r.cfg.pilotBaselineDays, totalDays: r.cfg.pilotTotalDays }
     : null;
-  const res = resolveArm({ outputMode: s.outputMode, pilot, now: Date.now() });
+  const res = resolveArm({ outputMode: outputModeOf(s.intervention), pilot, now: Date.now() });
   if (res.consumesIndex) {
     s.pilotEpisodeIndex += 1;
     void setSettings({ pilotEpisodeIndex: s.pilotEpisodeIndex });
@@ -241,8 +268,11 @@ function handleEffects(r: Run, effects: Effect[]) {
         break;
       }
       case 'notifyAlert':
-        r.today.detections += 1;
-        if (r.settings.notifications) send({ target: 'sw', type: 'ALERT', episodeId: e.episodeId });
+        if (e.alertNo === 1) r.today.detections += 1;
+        // Visual mode: the notification *is* the reminder. Sound modes: an optional quiet notification with feedback buttons.
+        if (e.arm === 'VISUAL' || r.settings.visualNotifications) {
+          send({ target: 'sw', type: 'ALERT', episodeId: e.episodeId, arm: e.arm, alertNo: e.alertNo, n: r.alertCount++ });
+        }
         break;
       case 'closeNotify':
         send({ target: 'sw', type: 'EPISODE_END', episodeId: e.episodeId });
@@ -259,6 +289,7 @@ function handleEffects(r: Run, effects: Effect[]) {
 }
 
 async function logEpisode(r: Run, ep: Episode) {
+  if (ep.alertAt != null && ep.arm === 'SILENT') r.today.detections += 1; // counted here: silent alerts emit no notifyAlert
   if (ep.outcome === 'interrupted' || ep.outcome === 'interrupted_after_2') r.today.interrupted += 1;
   await db.episodes.put(ep);
   if (ep.outcome === 'interrupted' && ep.alertAt != null) labelFromFeedback(r, 1, ep.endedAt - ep.alertAt, 'hand_down_after_alert', true);
@@ -290,18 +321,18 @@ function statusTick() {
   const r = run;
   if (!r) return;
   const fps = r.stats?.fps ?? 0;
-  const now = Date.now();
-  let status = r.status;
-  if (status === 'watching' || status === 'slow' || status === 'problem') {
-    // fps < 8 for 10 s → slow warning; fps < 3 for 10 s → watchdog problem.
-    r.slowSince = fps < 8 ? r.slowSince ?? now : null;
-    r.problemSince = fps < 3 ? r.problemSince ?? now : null;
-    status = r.problemSince && now - r.problemSince > 10_000 ? 'problem' : r.slowSince && now - r.slowSince > 10_000 ? 'slow' : 'watching';
-    if (status === 'slow' && !r.slowWarned) { r.slowWarned = true; logEvent('fps_warning', { fps: Math.round(fps * 10) / 10 }); }
-    if (status === 'watching') r.slowWarned = false;
-    r.status = status;
+  if (r.status === 'starting' || r.status === 'watching' || r.status === 'slow' || r.status === 'problem') {
+    const h = deskHealth({ now: Date.now(), attachedAt: r.attachedAt, lastFrameAt: r.lastFrameAt, fps, slowSince: r.slowSince });
+    r.slowSince = h.slowSince;
+    r.status = h.status;
+    r.errorKind = h.status === 'problem' ? (h.reason === 'no_frames' ? 'models' : 'stalled') : undefined;
+    if (h.status === 'slow' && !r.slowWarned) { r.slowWarned = true; logEvent('fps_warning', { fps: Math.round(fps * 10) / 10 }); }
+    if (h.status === 'watching') r.slowWarned = false;
   }
-  send({ target: 'sw', type: 'STATUS', status, fps, delegate: r.stats?.delegate, phase: r.engine.phase, today: r.today, error: r.error });
+  send({
+    target: 'sw', type: 'STATUS', status: r.status, fps, delegate: r.stats?.delegate, phase: r.engine.phase, today: r.today,
+    error: r.status === 'error' ? r.error : undefined, errorKind: r.errorKind, lastFaceAt: r.lastFaceAt,
+  });
 }
 
 async function persistSession(r = run) {
@@ -325,10 +356,13 @@ async function reloadSettings() {
   if (!r) return;
   r.settings = await getSettings();
   const calib = await activeCalibration(r.settings);
-  r.cfg = configFor(r.settings.sensitivity, calib?.extraDwellMs ?? 0);
+  r.cfg = configOf(r.settings, calib);
+  r.ctx.cooldownMs = r.cfg.cooldownMs;
+  r.ctx.followUp = r.settings.followUp;
+  r.player.setVolume(r.settings.chimeVolume / 100);
   r.vision?.update({ cfg: r.cfg, calib, zones: r.settings.zones });
-  r.session.outputMode = r.settings.outputMode;
-  // Clips may have been re-recorded.
+  r.session.outputMode = outputModeOf(r.settings.intervention);
+  // Clips may have been re-recorded or deleted.
   const rows = await db.clips.toArray();
   await r.player.load(rows);
   r.ctx.clips = rows.filter((c) => r.player.has(c.id)).map(({ id, category, createdAt, lastPlayedAt, playCount }) => ({ id, category, createdAt, lastPlayedAt, playCount }));
@@ -341,7 +375,7 @@ on('offscreen', async (msg) => {
     case 'OFF_START':
       starting ??= start().catch((e) => {
         console.error(e);
-        send({ target: 'sw', type: 'STATUS', status: 'error', fps: 0, phase: 'IDLE', today: { detections: 0, interrupted: 0 }, error: String(e) });
+        send({ target: 'sw', type: 'STATUS', status: 'error', fps: 0, phase: 'IDLE', today: { detections: 0, interrupted: 0 }, error: 'TrichFree could not start. Try again.', errorKind: 'other' });
       }).finally(() => { starting = null; });
       await starting;
       return { ok: true };

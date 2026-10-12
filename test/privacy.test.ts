@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Episode } from '../src/core/types';
 import { assertNoMedia, calibrationRow, episodeRow, eventRow, sessionRow } from '../src/shared/telemetry';
+import { COLUMN, DEFAULT_PREFS, toRow } from '../src/sync/prefs';
 
 const ep: Episode = {
   id: 'e1', sessionId: 's1', participantCode: 'TF-AB12', startedAt: 1, alertAt: 2, endedAt: 3, zone: 'crown', arm: 'VOICE', pilotDay: 5,
@@ -45,17 +46,17 @@ describe('privacy', () => {
     expect(() => assertNoMedia({ a: 'data:image/png;base64,AAAA' })).toThrow();
   });
 
-  it('the upload queue is the only network path and checks every row', () => {
+  it('only two modules talk to the network: the pilot upload queue and the account service', () => {
     const src = readFileSync('src/shared/uploadQueue.ts', 'utf8');
     expect(src).toMatch(/assertNoMedia\(row\)/);
     expect(src).toMatch(/rows\.forEach\(\(r\) => assertNoMedia\(r\.row\)\)/);
-    // No other source file talks to the network.
+    const allowed = new Set([join('src', 'shared', 'uploadQueue.ts'), join('src', 'background', 'account.ts')]);
     const offenders: string[] = [];
     const walk = (dir: string) => {
       for (const f of readdirSync(dir)) {
         const p = join(dir, f);
         if (statSync(p).isDirectory()) walk(p);
-        else if (/\.(ts|tsx)$/.test(f) && p !== join('src', 'shared', 'uploadQueue.ts')) {
+        else if (/\.(ts|tsx)$/.test(f) && !allowed.has(p)) {
           const s = readFileSync(p, 'utf8');
           if (/\bfetch\(|XMLHttpRequest|sendBeacon|WebSocket\(|createClient\(/.test(s)) offenders.push(p);
         }
@@ -65,9 +66,26 @@ describe('privacy', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('the manifest CSP restricts connect-src and has no content scripts or broad permissions', () => {
+  it('the account service only ever sends preference columns (never media, landmarks or detection history)', () => {
+    const row = toRow(DEFAULT_PREFS);
+    expect(() => assertNoMedia(row)).not.toThrow();
+    expect(Object.keys(row).sort()).toEqual(Object.values(COLUMN).sort());
+    for (const banned of ['episode', 'landmark', 'frame', 'clip', 'audio', 'video', 'image', 'feature']) {
+      expect(Object.keys(row).some((k) => k.includes(banned)), banned).toBe(false);
+    }
+    // The sync code writes only through the user_preferences table and the account RPCs.
+    const remote = readFileSync('src/sync/remote.ts', 'utf8');
+    const tables = [...remote.matchAll(/\.from\('([a-z_]+)'\)/g)].map((m) => m[1]);
+    expect(new Set(tables)).toEqual(new Set(['user_preferences', 'profiles', 'reflections']));
+  });
+
+  it('the manifest CSP is locked down and there are no content scripts or broad permissions', () => {
     const m = readFileSync('manifest.config.ts', 'utf8');
     expect(m).toMatch(/connect-src \$\{connectSrc\}/);
+    expect(m).toMatch(/default-src 'self'/);
+    expect(m).toMatch(/script-src 'self' 'wasm-unsafe-eval'/);
+    expect(m).toMatch(/object-src 'none'/);
+    expect(m).not.toMatch(/'unsafe-inline'|'unsafe-eval'/);
     expect(m).not.toMatch(/content_scripts|<all_urls>|'tabs'|'history'/);
   });
 });

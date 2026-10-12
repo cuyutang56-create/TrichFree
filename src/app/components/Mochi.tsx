@@ -83,7 +83,8 @@ interface Props {
   title?: string;
 }
 
-const reduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduced = () => (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches)
+  || (typeof document !== 'undefined' && document.documentElement.classList.contains('reduce-motion'));
 
 /** Mochi: a squishy rice-cake buddy. Squeezing it is a tiny "hands' plan B" (helper #3: something with your hands). */
 export function Mochi({

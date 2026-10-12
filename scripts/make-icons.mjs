@@ -1,4 +1,5 @@
-// Draws the TrichFree icon (a sage circle with a soft inner ring and a small leaf-like pause mark) as PNGs.
+// Draws the TrichFree icon (a soft lavender circle with a calm, friendly face) as PNGs.
+// The old icon was a pause mark, which read as "monitoring paused" next to the toolbar status badge.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
 
@@ -31,17 +32,16 @@ function png(size, pixel) {
   ihdr.writeUInt32BE(size, 0); ihdr.writeUInt32BE(size, 4); ihdr[8] = 8; ihdr[9] = 6; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
   return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
 }
-const SAGE = [63, 143, 107], CREAM = [247, 245, 240];
+const LAVENDER = [106, 90, 168], CREAM = [251, 248, 244];
 function icon(u, v) {
   const dx = u - 0.5, dy = v - 0.5, r = Math.hypot(dx, dy);
   if (r > 0.48) return [0, 0, 0, 0];
-  // two rounded pause bars in cream
-  const bar = (cx) => Math.abs(u - cx) < 0.055 && Math.abs(v - 0.5) < 0.17;
-  const cap = (cx) => Math.hypot(u - cx, Math.abs(v - 0.5) - 0.17) < 0.055;
-  if (bar(0.41) || bar(0.59) || cap(0.41) || cap(0.59)) return [...CREAM, 1];
-  const ring = r > 0.36 && r < 0.4;
-  const col = ring ? SAGE.map((c) => Math.min(255, c + 40)) : SAGE;
-  return [...col, 1];
+  const eye = (cx) => Math.hypot(u - cx, v - 0.42) < 0.062;
+  // Smile: lower arc of a circle centred just above the middle.
+  const sr = Math.hypot(u - 0.5, v - 0.47);
+  const smile = Math.abs(sr - 0.19) < 0.032 && v > 0.53 && Math.abs(u - 0.5) < 0.17;
+  if (eye(0.37) || eye(0.63) || smile) return [...CREAM, 1];
+  return [...LAVENDER, 1];
 }
 mkdirSync('public/icons', { recursive: true });
 for (const s of [16, 32, 48, 128]) writeFileSync(`public/icons/${s}.png`, png(s, icon));

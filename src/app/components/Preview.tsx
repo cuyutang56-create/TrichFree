@@ -4,7 +4,7 @@ import { activeCalibration, getSettings } from '../../shared/db';
 import { on, send, type OverlayFrame } from '../../shared/messages';
 import { openCamera } from '../../shared/visionClient';
 import { drawOverlay, readouts } from '../overlay';
-import { useDesk } from '../useDesk';
+import { useDesk } from '../hooks';
 
 /** Live camera preview with the detection overlay streamed from desk mode (landmarks only, never pixels). */
 export function Preview({ zones }: { zones: Calibration['zones'] }) {

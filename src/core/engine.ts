@@ -21,7 +21,8 @@ export type Effect =
   | { type: 'play'; sound: 'chime' }
   | { type: 'play'; sound: 'clip'; clipId: string; delayMs: number }
   | { type: 'clipPlayed'; clipId: string; t: number }
-  | { type: 'notifyAlert'; episodeId: string }
+  /** Show the on-screen cue. Never emitted for the SILENT arm (pilot baseline, "off"): silent means silent. */
+  | { type: 'notifyAlert'; episodeId: string; arm: Arm; alertNo: 1 | 2 }
   | { type: 'closeNotify'; episodeId: string }
   | { type: 'logEpisode'; episode: Episode }
   | { type: 'logEvent'; eventType: 'manual_pull' | 'false_alarm'; t: number; episodeId?: string; missed?: boolean };
@@ -34,6 +35,8 @@ export interface EngineContext {
   clips: ClipMeta[];
   checkMs: number;
   cooldownMs: number;
+  /** One more cue if the hand is still up after checkMs. Off: a single cue per episode. */
+  followUp: boolean;
   chimeMs: number;
   chimeToClipGapMs: number;
   newId: () => string;
@@ -83,7 +86,7 @@ export function reduce(prev: EngineState, ev: EngineEvent, now: number, ctx: Eng
         s.alertAt = now;
         s.phase = 'ALERT_1';
         playAlert(s, 1, now, ctx, effects);
-        effects.push({ type: 'notifyAlert', episodeId: s.episode.id });
+        if (arm !== 'SILENT') effects.push({ type: 'notifyAlert', episodeId: s.episode.id, arm, alertNo: 1 });
       }
       break;
 
@@ -115,11 +118,18 @@ export function reduce(prev: EngineState, ev: EngineEvent, now: number, ctx: Eng
   return { state: s, effects };
 }
 
+// At most two cues per continuous episode (ALERT_1, then ALERT_2 if followUp), then PERSIST stays quiet until
+// the hand leaves. A cue never repeats in a loop while the same gesture continues.
 function advance(s: EngineState, now: number, ctx: EngineContext, effects: Effect[]): EngineState {
   if (s.phase === 'ALERT_1' && s.alertAt != null && now - s.alertAt >= ctx.checkMs) {
-    s.phase = 'ALERT_2';
-    s.alert2At = now;
-    playAlert(s, 2, now, ctx, effects);
+    if (!ctx.followUp) {
+      s.phase = 'PERSIST';
+    } else {
+      s.phase = 'ALERT_2';
+      s.alert2At = now;
+      playAlert(s, 2, now, ctx, effects);
+      if (s.episode?.arm === 'VISUAL') effects.push({ type: 'notifyAlert', episodeId: s.episode.id, arm: 'VISUAL', alertNo: 2 });
+    }
   }
   if (s.phase === 'ALERT_2' && s.alert2At != null && now - s.alert2At >= ctx.checkMs) {
     s.phase = 'PERSIST';
@@ -139,7 +149,7 @@ function newEpisode(t: number, ctx: EngineContext, zone: Episode['zone']): Episo
 
 function playAlert(s: EngineState, alertNo: 1 | 2, now: number, ctx: EngineContext, effects: Effect[]) {
   const ep = s.episode;
-  if (!ep || !ep.arm || ep.arm === 'SILENT') return;
+  if (!ep || !ep.arm || ep.arm === 'SILENT' || ep.arm === 'VISUAL') return;
   const voice = ep.arm === 'VOICE';
   // ALERT_1: chime then own voice (VOICE arm). ALERT_2: chime again (CHIME arms) or the next clip (VOICE arm).
   const chime = alertNo === 1 || !voice;

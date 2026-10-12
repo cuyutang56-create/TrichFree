@@ -1,4 +1,5 @@
-// Web Audio playback in the offscreen document: pre-decoded clips + a synthesised two-note chime.
+// Web Audio playback (offscreen document, onboarding test, "Test reminder"): pre-decoded clips + a synthesised
+// two-note chime, through one master gain so the user's volume setting applies to both.
 import { dbToAmp } from '../core/audioProcess';
 
 export const CHIME_MS = 400;
@@ -6,8 +7,17 @@ const CHIME_PEAK = 0.6 * dbToAmp(-3); // 60% of the clips' normalised peak
 
 export class Player {
   ctx = new AudioContext({ latencyHint: 'interactive' });
+  private master = this.ctx.createGain();
   private buffers = new Map<string, AudioBuffer>();
   private active: AudioScheduledSourceNode[] = [];
+
+  constructor(volume = 0.7) {
+    this.master.connect(this.ctx.destination);
+    this.setVolume(volume);
+  }
+
+  /** 0..1. Perceived loudness is roughly logarithmic, so the slider maps to a squared gain. */
+  setVolume(v: number) { this.master.gain.value = Math.max(0, Math.min(1, v)) ** 2; }
 
   async resume() { if (this.ctx.state === 'suspended') await this.ctx.resume().catch(() => {}); return this.ctx.state; }
 
@@ -32,7 +42,7 @@ export class Player {
       g.gain.setValueAtTime(0, t0 + off);
       g.gain.linearRampToValueAtTime(CHIME_PEAK, t0 + off + 0.015);
       g.gain.exponentialRampToValueAtTime(0.001, t0 + off + 0.2);
-      osc.connect(g).connect(this.ctx.destination);
+      osc.connect(g).connect(this.master);
       osc.start(t0 + off);
       osc.stop(t0 + off + 0.21);
       this.track(osc);
@@ -45,7 +55,7 @@ export class Player {
     if (!buf) return null;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
-    src.connect(this.ctx.destination);
+    src.connect(this.master);
     src.start(this.ctx.currentTime + delayMs / 1000);
     this.track(src);
     return Date.now() + delayMs;

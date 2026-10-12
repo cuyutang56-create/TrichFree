@@ -24,7 +24,7 @@ export function runReplay(rec: LandmarkRecording, opts: { cfg?: DetectorConfig; 
   let id = 0;
   const ctx: EngineContext = {
     sessionId: 'replay', decideArm: () => ({ arm: 'VOICE' }), clips: [],
-    checkMs: cfg.checkMs, cooldownMs: cfg.cooldownMs, chimeMs: 400, chimeToClipGapMs: cfg.chimeToClipGapMs,
+    checkMs: cfg.checkMs, cooldownMs: cfg.cooldownMs, followUp: true, chimeMs: 400, chimeToClipGapMs: cfg.chimeToClipGapMs,
     newId: () => `ep-${++id}`,
   };
   let engine = initialEngine();

@@ -14,7 +14,9 @@ import { CHIME_MS, Player } from '../../offscreen/player';
 import { useLocalVision } from '../calibrationSession';
 import { CameraBlocked } from '../components/CameraBlocked';
 import { ProgressRing } from '../components/ProgressRing';
-import { ZONE_LABELS, ZonePicker } from '../components/ZonePicker';
+import { ZONE_LABELS, ZonePicker } from '../../ui/ZonePicker';
+import { updateSettings } from '../hooks';
+import { Seg } from '../../ui/controls';
 import { drawOverlay } from '../overlay';
 import { maybeRetrain } from '../../shared/personalModel';
 
@@ -41,7 +43,7 @@ function buildPoses(zones: ZoneId[]): Pose[] {
   return [...reaches, ...everyday];
 }
 
-export function Calibrate({ settings, update, go }: ScreenProps) {
+export function Calibrate({ settings, go }: ScreenProps) {
   const [step, setStep] = useState<Step>('camera');
   const [zones, setZones] = useState<ZoneId[]>(settings.zones);
   const [calib, setCalib] = useState<Calibration | null>(null);
@@ -58,7 +60,7 @@ export function Calibrate({ settings, update, go }: ScreenProps) {
     const c = { ...calib!, validationPos: pos, validationNeg: neg };
     await db.calibration.put(c);
     await db.events.add({ id: uid(), type: 'validation', t: Date.now(), data: { pos, neg } });
-    await update({ activeCalibrationId: c.id, zones, sensitivity, onboarded: true, onboardingStep: 'done' });
+    await updateSettings({ activeCalibrationId: c.id, zones, sensitivity });
     await maybeRetrain(true);
     const share = await sharingEnabled();
     if (share.on && share.code) await enqueue('calibrations', calibrationRow(c, share.code, configFor(sensitivity, c.extraDwellMs).dwellMs));
@@ -69,7 +71,7 @@ export function Calibrate({ settings, update, go }: ScreenProps) {
   return (
     <div>
       <div className="card">
-        <div className="row"><h1 style={{ margin: 0 }}>Calibration</h1><span className="spacer" /><span className="pill">Step {stepNo} of 4 · about 2 minutes</span></div>
+        <div className="row"><h1 style={{ margin: 0 }}>Tune-up</h1><span className="spacer" /><span className="pill">Part {stepNo} of 4 · about 2 minutes</span></div>
         <p className="muted" style={{ marginTop: 8, marginBottom: 0 }}>
           {step === 'camera' && 'A quick camera check. Sit like you normally do.'}
           {step === 'zones' && 'Where do you usually pull? Pick every place that applies.'}
@@ -88,13 +90,13 @@ export function Calibrate({ settings, update, go }: ScreenProps) {
           </div>
         )}
         <div style={{ flex: '1 1 300px', minWidth: 0 }}>
-          {v.error && <div className="card warn small" role="alert">{v.error}</div>}
+          {v.error && <div className="notice warn small" role="alert">{v.error}</div>}
           {step === 'camera' && <CameraCheck v={v} videoRef={v.videoRef} onDone={() => setStep('zones')} />}
           {step === 'zones' && (
             <div className="card">
               <ZonePicker value={zones} onChange={setZones} />
-              <p className="small muted" style={{ marginTop: 10 }}><b>Strands / ends</b> covers hair you hold away from your scalp, like a lock beside your face or at your shoulder.</p>
-              <button className="primary big" disabled={!zones.length} onClick={async () => { await update({ zones }); setStep('show'); }}>
+              <p className="small muted" style={{ marginTop: 10 }}><b>Strands / lengths</b> covers hair you hold away from your scalp, like a lock beside your face or at your shoulder.</p>
+              <button className="btn primary big" disabled={!zones.length} onClick={async () => { await updateSettings({ zones }); setStep('show'); }}>
                 {zones.length ? 'Next' : 'Pick at least one'}
               </button>
             </div>
@@ -110,9 +112,9 @@ export function Calibrate({ settings, update, go }: ScreenProps) {
           {step === 'try' && calib && <TryIt v={v} calib={calib} initial={settings.sensitivity} onFinish={finish} />}
           {step === 'done' && (
             <div className="card soft">
-              <h2>Calibration saved</h2>
-              <p>Start desk mode from the toolbar button or the Desk page. TrichFree works quietly in the background while you study or work.</p>
-              <button className="primary big" onClick={() => go('home')}>Go to desk mode</button>
+              <h2>Tune-up saved</h2>
+              <p>TrichFree now uses what it learned about your hands with this camera. It works quietly in the background while you study or work.</p>
+              <button className="btn primary big" onClick={() => go('home')}>Back to the dashboard</button>
             </div>
           )}
         </div>
@@ -189,7 +191,7 @@ function CameraCheck({ v, videoRef, onDone }: { v: ReturnType<typeof useLocalVis
         {item(lightOk, 'Enough light', Number.isNaN(checks.light) ? 'Checking light…' : 'Add some light in front of you')}
       </ul>
       {v.stats && <p className="small muted">Running at {v.stats.fps.toFixed(0)} fps ({v.delegate}).</p>}
-      {passed ? <p style={{ color: 'var(--accent)', fontWeight: 600 }}>Looks good ✓</p> : timedOut && <button className="primary big" onClick={onDone}>Continue anyway</button>}
+      {passed ? <p style={{ color: 'var(--accent)', fontWeight: 600 }}>Looks good ✓</p> : timedOut && <button className="btn primary big" onClick={onDone}>Continue anyway</button>}
     </div>
   );
 }
@@ -266,7 +268,7 @@ function ShowMe({ v, zones, onDone }: { v: ReturnType<typeof useLocalVision>; zo
         <h2>Show me (about {totalS} seconds)</h2>
         <p>You’ll see {poses.filter((p) => p.label).length === 1 ? 'one reach' : `${poses.filter((p) => p.label).length} reaches`} and 3 everyday moves. Each one lasts a few seconds and the next starts by itself.</p>
         <ol className="small muted">{poses.map((p) => <li key={p.id}>{p.label ? 'Reach: ' : ''}{p.title}</li>)}</ol>
-        <button className="primary big" disabled={!v.ready} onClick={start}>{v.ready ? 'Start' : 'Loading…'}</button>
+        <button className="btn primary big" disabled={!v.ready} onClick={start}>{v.ready ? 'Start' : 'Loading…'}</button>
       </div>
     );
   }
@@ -289,8 +291,8 @@ function ShowMe({ v, zones, onDone }: { v: ReturnType<typeof useLocalVision>; zo
       </div>
       <div className="row">
         {phase.kind === 'paused'
-          ? <button onClick={() => setPhase({ kind: 'prep', until: Date.now() + PREP_MS })}>Resume</button>
-          : <button className="ghost" onClick={() => setPhase({ kind: 'paused' })}>Pause</button>}
+          ? <button className="btn" onClick={() => setPhase({ kind: 'prep', until: Date.now() + PREP_MS })}>Resume</button>
+          : <button className="btn ghost" onClick={() => setPhase({ kind: 'paused' })}>Pause</button>}
       </div>
     </div>
   );
@@ -388,18 +390,17 @@ function TryIt({ v, calib, initial, onFinish }: {
       </div>
       <div className="row small">
         <span className="muted">Speed:</span>
-        <div className="seg">
-          {(['relaxed', 'balanced', 'sensitive'] as Sensitivity[]).map((s) => <button key={s} className={sens === s ? 'on' : ''} onClick={() => { setSens(s); setNote(''); }}>{s[0].toUpperCase() + s.slice(1)}</button>)}
-        </div>
+        <Seg<Sensitivity> label="Speed" value={sens} onChange={(s) => { setSens(s); setNote(''); }}
+          options={[['relaxed', 'Relaxed'], ['balanced', 'Balanced'], ['sensitive', 'Sensitive']]} />
       </div>
       <div className="row" style={{ marginTop: 10 }}>
-        <button className="ghost" onClick={missed}>It’s missing me</button>
-        <button className="ghost" onClick={falseAlarm}>It went off by mistake</button>
+        <button className="btn ghost" onClick={missed}>It’s missing me</button>
+        <button className="btn ghost" onClick={falseAlarm}>It went off by mistake</button>
       </div>
       {note && <p className="small muted" role="status">{note}</p>}
       <div className="row" style={{ marginTop: 12 }}>
-        <button className="primary" disabled={catches < 1} onClick={() => onFinish(Math.min(catches, 5), mistakes, sens)}>{catches >= 1 ? 'Looks good, finish' : 'Catch at least one reach'}</button>
-        <button className="ghost" onClick={() => onFinish(Math.min(catches, 5), mistakes, sens)}>Skip</button>
+        <button className="btn primary" disabled={catches < 1} onClick={() => onFinish(Math.min(catches, 5), mistakes, sens)}>{catches >= 1 ? 'Looks good, finish' : 'Catch at least one reach'}</button>
+        <button className="btn ghost" onClick={() => onFinish(Math.min(catches, 5), mistakes, sens)}>Skip</button>
       </div>
     </div>
   );

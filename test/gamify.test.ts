@@ -52,9 +52,9 @@ describe('xp, levels, quests', () => {
 
 describe('Mochi', () => {
   it('is never sassy about a pull', () => {
-    expect(mochiSays('afterPull', 'sassy')).toBe(mochiSays('afterPull', 'gentle'));
+    expect(mochiSays('afterPull', 'playful')).toBe(mochiSays('afterPull', 'gentle'));
   });
   it('fills in the streak', () => {
-    expect(mochiSays('reminder', 'sassy', { streak: 7 }, 0)).toContain('7-day');
+    expect(mochiSays('reminder', 'playful', { streak: 7 }, 0)).toContain('7-day');
   });
 });
