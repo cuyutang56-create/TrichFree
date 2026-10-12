@@ -1,16 +1,30 @@
 # Progress
 
-| # | Milestone | Status | Evidence / what's left |
-|---|---|---|---|
-| M0 | Scaffold (CRXJS/Vite/React/TS, SW, offscreen, worker, popup, app, typed messages, Dexie, CI) | ✅ Done | `npm run build` loads cleanly in Chromium 153; the popup opens the app page; Vitest runs in CI (`.github/workflows/ci.yml`). |
-| M1 | Background spike (permission via app page → offscreen → MSTP → worker → both landmarkers from bundled assets → fps → heartbeat → badge) | ✅ Automated part / ⏳ manual | E2E passes (offscreen doc exists, ≥ 5 fps, badge `•`). Automated soak with the app tab closed and another page in front: see the soak results below. **Still to do by hand:** 10 min in a different full-screen app on real Chrome on macOS and Windows, then a reach-to-hair gesture must still alert. |
-| M2 | Vision core + debug overlay + recorder + replay CLI + synthetic fixtures | ✅ Done | zones/features/temporal/replay tests pass; `npm run replay` works; the Debug page draws zones following the head. |
-| M3 | Engine + audio in offscreen (reducer, chime synth, pre-decoded clips, notifications with buttons, global commands) | ✅ Built / ⏳ manual | Engine tests cover every transition + feedback in every state. Latency is logged as the `alert_latency` event. Needs a real "hand at crown → chime + clip < 300 ms" check with Chrome in the background. |
-| M4 | Voice library (record, trim/normalise, WAV, prompts, re-record) | ✅ Done | audioProcess tests pass (trim, −3 dBFS ± 0.2, 22.05 kHz 16-bit WAV). The offscreen doc decodes WAV clips (E2E uses stub WAVs). |
-| M5 | Onboarding, calibration + validation, popup, settings, idle/lock stop, camera conflicts, backup, delete-all | ✅ Built / ⏳ manual | Onboarding UI is exercised in E2E. Manual checklist 1–8 (README) still needs one Mac and one Windows laptop. |
-| M6 | Pilot mode (code, schedule, permuted blocks, upload queue, schema, CSV, progress screen) | ✅ Built / ⏳ backend | arms tests pass; `supabase/schema.sql` is ready. "Rows appear in Supabase" needs a real project + env vars. |
-| M7 | Store package (icons, listing, permissions, privacy policy, zip script, checklist) | ✅ Done | `npm run package` → `release/trichfree-desk-v0.1.0.zip`; docs in `store/`. Screenshots still to capture. |
-| M8 | Personal classifier, web demo | ⛔ Not started (by design) | Spec: only after M0–M7 and real-user testing. Feature samples are already logged. |
+## Status on 2026-10-12
+
+| Area | Status | Evidence / what's left |
+|---|---|---|
+| Extension core (camera, on-device detection, reminders, background running) | ✅ Built and tested | Unit + browser tests; soak 11–14 fps on a no-GPU machine (CPU path). **Manual checklist on real Mac and Windows laptops still to do** (TESTING.md). |
+| Detection reliability | ✅ Harness + fixes | docs/DETECTION_REPORT.md: synthetic fixtures at 15–3 fps, noise and missed detections, 50-seed sweep; 4 detector bugs fixed. Real-world accuracy unknown until the pilot. |
+| Reminders (own voice, chime, visual, off; volume; quiet time; follow-up; suggestions) | ✅ Built and tested | Engine and browser tests. |
+| Onboarding (2 steps) and dashboard | ✅ Built and tested | Browser tests reach a test reminder in step 2; axe scans pass. Usability with real users not yet done. |
+| Accounts (email code), guest mode, sync across devices | ✅ Built and tested | 50 database tests; two-browser test against a real local Supabase; CI `full-stack` job green. |
+| Export and deletion (account and local) | ✅ Built and tested | Integration + browser tests. |
+| Website (landing, /try, /app, privacy, pilot form) | ✅ Built and tested; ⏳ not deployed | Browser tests under the real CSP. Needs hosting + domain (DEPLOYMENT.md). |
+| Security review | ✅ Done (internal) | SECURITY.md: findings fixed, remaining risks listed. No independent review yet. |
+| Pilot mode | ✅ Built and tested; ⏳ needs backend, codes, ethics | Long random codes; uploads tested against the database. |
+| Store package | ✅ Builds; ⏳ not submitted | `npm run package`; texts in `store/`; screenshots to capture. |
+| Deployment | ⏳ Not started (needs the team's accounts) | Step-by-step in DEPLOYMENT.md. |
+
+## 2026-10-12
+- Audit of the prototype (AUDIT.md), then accounts and sync, the redesign, the website, detection reliability,
+  security review and documentation. Commit history on `claude/affectionate-knuth-s50xg8` has the details.
+- Tests: unit 22 files / 173 tests; database integration 50; browser 21 (extension 9, cross-device 3, website 9).
+  All green locally and in CI (both jobs).
+- Soak (this container: 4 vCPU, no GPU, headless, fake camera): default 11.1–14.4 fps at 165 % CPU, 541 MB;
+  lighter detection 7.8–8.0 fps at 94 % CPU. Before the CPU-path fix the same machine ran at 2.4–2.7 fps at 372 % CPU.
+- Still to do by hand: TESTING.md manual checklist on one Mac and one Windows laptop; re-test the strand pull with the
+  user from 2026-10-05.
 
 ## Test results (2026-09-29)
 - Unit: 10 files, 72 tests passing (`npm test`).

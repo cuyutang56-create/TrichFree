@@ -171,7 +171,9 @@ The extension needs the website's URL at build time, and the website needs the e
    from episodes where alert_at is not null and outcome <> 'false_alarm' and pilot_day between 4 and 14 group by arm;
    ```
 5. Deletion request: delete that `participant_code`'s rows from the four tables, then set the code inactive:
-   `update pilot_codes set active = false where code = '…'`.
+   `update pilot_codes set active = false where code = '…'`. The privacy policy also promises to delete pilot
+   interest entries within 12 months. Put a recurring reminder in the team calendar to run
+   `delete from pilot_interest where created_at < now() - interval '12 months';` (or delete sooner on request).
 6. Before analysis, drop implausible rows. Anyone holding a code can upload under it (SECURITY.md).
 7. Ethics: running a study with people may need approval and a consent process from your institution. Check before
    recruiting.
@@ -208,6 +210,11 @@ TrichFree has no third-party analytics by design. Use:
 - Supabase *Logs* (Auth, API, Postgres errors);
 - *Reports* (usage);
 - the hosting dashboard (deploys, bandwidth).
+
+For simple health checks, point a free uptime monitor at the website (`https://<domain>/`) and at Supabase Auth's
+health endpoint (`https://<project-ref>.supabase.co/auth/v1/health`, sent with the publishable key as the `apikey`
+header). These checks touch no user data. Avoid error-tracking tools that capture page content or user input: TrichFree's
+screens can reveal a health condition.
 
 Sync problems show to users as a notice and stay on the device. Ask users to report them, using the contact
 address.

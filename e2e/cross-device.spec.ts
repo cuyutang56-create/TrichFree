@@ -59,7 +59,7 @@ test('Laptop A saves → database → Laptop B retrieves and changes → Laptop 
     await expect.poll(async () => (await prefsInDb(email))?.sensitivity, { timeout: 15_000 }).toBe('sensitive');
 
     // 7. Later, the user opens TrichFree on A: it picks up B's change by itself (opening or refocusing a TrichFree
-    //    page syncs when the last sync is over a minute old; it also syncs every 15 minutes and on browser start)
+    //    page syncs when the last sync is over 15 seconds old; it also syncs every 15 minutes and on browser start)
     //    and keeps its own value for the field B did not touch.
     await A.sw.evaluate(async () => {
       const { accountState } = await chrome.storage.local.get('accountState');

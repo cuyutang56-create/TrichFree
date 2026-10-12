@@ -1,24 +1,23 @@
-# TrichFree Desk: privacy policy
+# Privacy policy
 
-_Last updated: 2026-09-29_
+The privacy policy is part of the website: `web/privacy/index.html`, published at `https://<your domain>/privacy/`.
+Use that URL in the Chrome Web Store, and edit that one file when the policy changes. That keeps a single source
+of truth.
 
-TrichFree Desk is a self-help tool. It is not a medical device or a treatment.
+In short (the policy has the details):
+- Camera video is analysed on the device and never saved or uploaded.
+- Voice recordings and the detection history stay on the device.
+- TrichFree works without an account. With a free account, Supabase stores the email address, the reminder
+  settings and any reflections the user saves. Row-level security protects them, and the user can export or delete
+  them at any time.
+- Research pilot participants who opt in send pseudonymous rows (times, reminder type, outcomes, feedback taps),
+  never video, images or audio.
+- No ads, no tracking, no third-party scripts; data is never sold.
 
-## What stays on your computer
-- **Camera.** Video is analysed on your device, frame by frame, to find hand and face landmarks (points). Frames are discarded immediately. No video or image is ever saved or sent anywhere.
-- **Voice clips** you record, your calibration, and your history (times a hand was detected, whether it came down, your "Not a pull" / "I just pulled" taps) are stored in your browser's storage on this computer.
-- **Backups** you export are files you control.
+Before publishing, fill in what only the team can confirm:
+- the contact address: set `VITE_CONTACT_EMAIL`; without it the page offers GitHub only;
+- the backup retention period of the chosen Supabase plan ("Deletion");
+- the version line at the top.
 
-## What is sent (pilot participants only)
-Only if you enter a pilot participant code **and** agree to the pilot data notice, the app sends the research team: your participant code; the times episodes were detected; which alert played; whether your hand came down within 10 seconds; your "Not a pull" and "I just pulled" taps; desk minutes; and calibration quality scores. It never sends video, images or your voice clips. You can stop sending at any time in Settings.
-
-The participant code is not linked to your name inside the app. The research team keeps that link separately, offline.
-
-## No tracking
-No analytics, advertising, fonts or third-party scripts are loaded. The extension cannot read the web pages you visit.
-
-## Deleting your data
-Settings → **Delete all my data** removes everything stored on this computer. To delete pilot rows already sent, email the research team with your participant code.
-
-## Contact
-The TrichFree team: see the contact address in the store listing.
+When the policy changes, also update `PRIVACY_POLICY_VERSION` in `src/sync/remote.ts`, which records the version
+each account accepted.

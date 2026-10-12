@@ -79,7 +79,7 @@ export type Msg =
   | { target: 'sw'; type: 'ACCOUNT_DELETE' }
   | { target: 'sw'; type: 'ACCOUNT_EXPORT' }
   | { target: 'sw'; type: 'SYNC_NOW' }
-  /** A TrichFree page was opened or came back into view: sync if the last sync is older than a minute. */
+  /** A TrichFree page was opened or came back into view: sync if the last sync is older than 15 seconds. */
   | { target: 'sw'; type: 'SYNC_IF_STALE' }
   | { target: 'sw'; type: 'NOTICE_DISMISS' }
   // → offscreen document

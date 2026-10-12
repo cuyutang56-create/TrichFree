@@ -39,6 +39,25 @@ flowchart LR
   WEB -- "HTTPS: sign-in, settings, reflections,<br/>export, deletion, pilot interest form" --> Cloud
 ```
 
+## Why this stack
+
+- **TypeScript, React, Vite and CRXJS**, kept from the prototype. They worked, the team knows them, and one code
+  base now serves both the extension and the website. The detection core, the sync engine and the design system
+  are shared rather than duplicated.
+- **MediaPipe in the browser**, kept from the prototype. It runs locally, needs no video upload, and is mature and
+  maintained.
+- **Supabase for accounts and data.** Supabase was already the prototype's pilot backend. It provides:
+  - Postgres with row-level security, so access rules live next to the data and are tested;
+  - email sign-in with one-time codes, so there are no passwords to store or recover;
+  - versioned SQL migrations;
+  - a local Docker stack, which lets every test run against the real thing.
+
+  There is no custom API server to secure, patch or scale.
+- **A static website.** Netlify or Cloudflare Pages provide HTTPS, security headers from `_headers`, instant
+  rollback and generous free tiers. There is no server-side code.
+- **What we did not add:** no microservices, no realtime channel, no third-party analytics and no object storage.
+  Each would add cost, risk or privacy exposure without a current need.
+
 ## Repository layout
 
 | Path | What it is |
@@ -126,7 +145,7 @@ lighter detection (frame rate), the debug page, pilot enrolment.
 
 **Extension:**
 - 1.5 s after a settings change;
-- whenever an extension page is opened or comes back into view, if the last sync is over a minute old;
+- whenever an extension page is opened or comes back into view, if the last sync is over 15 seconds old;
 - every 15 minutes while signed in;
 - at browser start;
 - after sign-in;

@@ -1,93 +1,138 @@
-# TrichFree Desk
+# TrichFree
 
-A Chrome/Edge extension (Manifest V3) for people with trichotillomania. While you study or work, it watches the webcam **on your device** with MediaPipe hand and face landmarks. When a hand stays at one of your pulling zones for about 1.5 s, it plays a soft chime and one of **your own** recorded voice clips. Every episode is logged (timestamps only, never video) with whether the hand came down within 10 s. A pilot mode randomises "chime only" vs "chime + own voice".
+**A little reminder, right when you need it.**
 
-The spec is `../TrichFree_Desk_MVP_Build_Spec.md`. Choices the spec left open are in [DECISIONS.md](DECISIONS.md), and milestone status is in [PROGRESS.md](PROGRESS.md).
+TrichFree is a privacy-first companion for people with trichotillomania. While you study or work, a browser
+extension watches your webcam **on your own device**. When your hand stays at your hair, it gives you the gentle
+reminder you chose: a line in **your own recorded voice**, a soft chime, or a quiet visual cue. Video never leaves
+your computer. An optional free account keeps your settings in sync across computers.
 
-## Setup
+TrichFree is a self-help tool, not a medical device or a treatment.
+
+| | |
+|---|---|
+| **Status** | Working end to end and tested (see below); **not yet deployed** and **not yet user-validated**. |
+| **Extension** | Chrome and Edge (Manifest V3) |
+| **Website** | Landing page, `/try/` (the detector in your browser), `/app/` (account), `/privacy/` |
+| **Backend** | Supabase (Postgres with row-level security, email-code sign-in) |
+
+## Documentation
+
+| Document | What it covers |
+|---|---|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Components, data map, accounts, cross-device sync and the conflict policy |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Going live: environments, Supabase, hosting, Chrome Web Store, pilot, rollback, backups |
+| [TESTING.md](TESTING.md) | Automated suites, how to run them, the manual checklist for real laptops |
+| [SECURITY.md](SECURITY.md) | Threat model, controls, review findings and the remaining risks |
+| [docs/DETECTION_REPORT.md](docs/DETECTION_REPORT.md) | How the detector behaves: latency, misses, false alerts, resource use, limits |
+| [IMPACT_READINESS.md](IMPACT_READINESS.md) | Problem, users, product, evidence (implemented / tested / user-validated / proposed), pilot plan, metrics |
+| [AUDIT.md](AUDIT.md) | The audit of the original prototype that this release started from |
+| [DECISIONS.md](DECISIONS.md), [PROGRESS.md](PROGRESS.md) | Design decisions and milestone log |
+
+## Quick start (development)
 
 ```bash
-npm install            # also copies MediaPipe WASM into public/mediapipe/wasm (postinstall)
-npm run fetch-models   # downloads hand_landmarker.task + face_landmarker.task (float16) into public/mediapipe/models
-npm run build          # → dist/
+npm ci                 # also copies the MediaPipe WebAssembly files (postinstall)
+npm run fetch-models   # hand, face and hair models: pinned versions, SHA-256 checked
+npm run build          # extension → dist/
 ```
 
-Other scripts:
+Then open `chrome://extensions` (or `edge://extensions`):
+1. Turn on **Developer mode**.
+2. Click **Load unpacked** and pick `dist/`.
+3. Onboarding opens by itself.
+
+This build has no backend configured, so it runs in guest mode: everything stays on the computer.
+
+With accounts, against a local backend (needs Docker):
+
+```bash
+npm run db:start                 # local Supabase: Postgres, Auth, and a mail catcher for sign-in codes
+node scripts/build-e2e.mjs       # extension (dist-e2e/) + website (dist-web-e2e/) pointed at the local stack
+WEB_OUT_DIR=dist-web-e2e npm run preview:web    # the website on http://127.0.0.1:5174
+```
+
+Sign-in codes appear in the local mail catcher at http://127.0.0.1:54324. Build variables are explained in
+[.env.example](.env.example).
+
+### Scripts
 
 | Script | What it does |
 |---|---|
-| `npm test` | Vitest unit tests (all of `src/core`, privacy, messages, replay fixtures) |
-| `npm run e2e` | Playwright: loads `dist/` in Chromium with a fake camera, onboards, runs desk mode, checks offscreen doc, fps and badge (build first) |
-| `npm run replay -- test/fixtures/*.json` | Runs detector + engine headlessly over landmark recordings and prints events |
-| `npm run fixtures` | Regenerates the 4 synthetic fixtures |
-| `node scripts/soak.mjs 10 [--video=clip.mjpeg]` | Background soak: desk mode on, app tab closed, another page in front; reports min/avg fps |
-| `node scripts/make-icons.mjs` | Regenerates the icons |
-| `npm run package` | Builds and zips `release/trichfree-desk-vX.Y.Z.zip` for the Web Store |
+| `npm test` / `npm run typecheck` | Unit tests / type checking |
+| `npm run test:integration` | Database tests against the local stack (row-level security, sync, deletion, …) |
+| `npm run e2e` | Browser tests (Playwright). Account and website tests need `node scripts/build-e2e.mjs` first |
+| `npm run build:web` / `npm run dev:web` | Website build (`dist-web/`) / dev server |
+| `npm run package` | Typecheck, build and zip the extension → `release/trichfree-desk-v<version>.zip` |
+| `npm run evaluate` | Detection evaluation → `docs/DETECTION_REPORT.md` |
+| `npm run replay -- <file.json>` | Replay a landmark recording through the detector and print events |
+| `npm run soak -- 3 [--lighter] [--write]` | Frame rate, CPU and memory with monitoring on (Linux for CPU and memory) |
+| `npm run fixtures` | Regenerate the synthetic landmark fixtures |
+| `node scripts/make-pilot-codes.mjs 30` | Participant codes for the research pilot, plus the SQL to register them |
+| `node scripts/make-og-image.mjs`, `node scripts/make-icons.mjs` | Regenerate the social preview image and the icons |
 
-### Load unpacked (development and pilot fallback)
-1. Run `npm run build` (or unzip a release zip into a folder).
-2. Open `chrome://extensions` (Edge: `edge://extensions`) and switch on **Developer mode** (top right).
-3. Click **Load unpacked** and pick the `dist/` folder (or the unzipped folder).
-4. Pin **TrichFree Desk** from the puzzle-piece menu so the toolbar badge is visible.
-5. The setup page opens by itself. When asked for the camera and microphone, choose **Allow** (not "Allow this time"), so desk mode can use the camera in the background.
+## Five-minute demo
 
-### Environment variables (all optional, read at build time)
-Copy `.env.example` to `.env`.
+Before the demo, set up a computer with a webcam:
+- the extension loaded from `dist-e2e/`;
+- the website preview running against the local stack, or the deployed site and backend;
+- one test account ready;
+- a second browser profile, set up the same way, for the sync step.
 
-| Variable | Effect |
-|---|---|
-| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Enables pilot uploads. The URL is added to `host_permissions` and CSP `connect-src`. Without them the pilot log stays local (CSV export). |
-| `VITE_EXIT_SURVEY_URL` | The link shown after pilot day 14. |
-| `VITE_TEAM_EMAIL` | Shown in "Delete all my data" for deleting uploaded pilot rows. |
+Rehearse once, and check that the room's lighting lets the camera see your face.
 
-## Architecture
+1. **0:00 The problem (30 s).** Pulling often starts without full awareness, at a desk, while studying. The person
+   notices afterwards. TrichFree aims to make the moment visible, gently and privately.
+2. **0:30 Onboarding (60 s).** Install, and onboarding opens. Show the **two steps**:
+   - what TrichFree does, with privacy in plain words;
+   - choose a reminder, then press **Test reminder** and hear it at once;
+   - optionally record a voice line ("Hey, it's me. Hands down, you're doing fine.").
 
-```
-Service worker (src/background/sw.ts)  owns the on/off intent; offscreen lifecycle; commands; notifications;
-   │                                   alarms (30 s heartbeat, 3 h auto-stop, pause); idle/lock stop; badge
-   ▼
-Offscreen document (src/offscreen)     getUserMedia → MediaStreamTrackProcessor ──transfer──► Vision worker
-   │                                   AudioContext player (pre-decoded clips + synth chime)
-   │                                   core/engine reducer → Dexie logs → upload queue
-Vision worker (src/workers)            MediaPipe Hand + Face landmarkers (bundled WASM/models, GPU→CPU fallback)
-                                       → core/pipeline (face frame → features → scorer → temporal) → DetectorEvents
-```
+   No account is needed: the chip says **Guest**.
+3. **1:30 Live detection (60 s).**
+   - Press **Start**: the dashboard shows "Watching", the camera status and the chosen reminder.
+   - Rest your chin on your hand, take a sip of water, touch your glasses briefly: nothing happens.
+   - Reach to your hairline and hold it there: your own voice plays.
+   - Click **Not a pull** to show feedback.
+   - Press **Pause**: the camera light goes off.
+4. **2:30 Privacy (30 s).** Open Settings → "Data on this computer":
+   - video is analysed in memory and never stored;
+   - voice recordings never leave the computer;
+   - only settings sync.
 
-- `src/core/` is pure TypeScript with no DOM-only APIs and no `chrome.*`, and runs in Node for tests and replay. Files: `faceIndices`, `faceFrame`, `zones`, `features`, `scorer`, `temporal`, `pipeline`, `engine`, `arms`, `clipPicker`, `audioProcess`, `calibration`, `replay`, `detectorConfig`.
-- `src/shared/` holds the Dexie schema, typed messages, telemetry mapper, upload queue, backup, CSV export and copy.
-- `src/app/` is the full UI (hash routes: welcome, consent, safety, record, calibrate, desk, progress, settings, debug), and `src/popup/` is the toolbar popup.
-- No content scripts, no `tabs`/`history`/`<all_urls>`. Video frames never leave the worker. Only JSON landmarks move between contexts.
+   Mention the tests that check the extension cannot send anything else (SECURITY.md).
+5. **3:00 Cross-device (60 s).**
+   - Click **Save across devices** and sign in with an emailed 6-digit code (no password).
+   - Change the quiet time.
+   - In the second browser profile ("Laptop B"), sign in: the setting is there. Change the sensitivity.
+   - Back on Laptop A, click into TrichFree: B's change arrives within a moment, and the notice says so. If the
+     network is slow, press **Sync now**.
+   - Open `/app/` on the website to show the same settings, export, and account deletion.
+6. **4:00 Evidence and honesty (45 s).**
+   - Show docs/DETECTION_REPORT.md: synthetic fixtures at 15 to 3 fps, four bugs found and fixed, known limits
+     such as scalp scratching.
+   - Show CI green, including the two-browser test against a real database.
+   - Say clearly: **no evidence of benefit yet**. That is what the 14-day pilot (chime versus own voice) is for.
+7. **4:45 Ask (15 s).** Support for the pilot (ethics, participants) and introductions to people with lived
+   experience who would like to try it.
 
-## Chrome Web Store (Unlisted)
-1. `npm run package`, then test the zip in a fresh profile: unzip it and use Load unpacked.
-2. Developer Dashboard → New item → upload the zip.
-3. Fill the listing from `store/listing.md`, the privacy tab from `store/permissions.md`, and host `store/privacy-policy.md` and link it.
-4. Set visibility to **Unlisted** and submit. Review can take several days, longer for camera extensions, so submit early.
+**If something fails during the demo:** use `/try/` on the website. It runs the same detector in the page with no
+install and no account.
 
-## Pilot runbook
-1. **Issue codes:** generate codes `TF-XXXX` (4 uppercase letters or digits), for example `TF-7K2M`. Keep the code↔person list **offline**. The app never stores names.
-2. **Backend (optional):** create a Supabase project and run `supabase/schema.sql` in the SQL editor (tables are insert-only for `anon`). Build with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` set, then package.
-3. **Enrol:** the participant installs, enters the code on the consent screen and agrees to the pilot notice. The enrolment date is day 1.
-4. **Schedule:** days 1–3 are baseline (detect and log only, silent). Days 4–14 randomise each episode to CHIME or VOICE in permuted blocks of 4, seeded on the code. After day 14 it is always VOICE, with a banner and the exit-survey link.
-5. **Read the data:** Supabase dashboard → Table editor (`episodes`, `sessions`, `events`, `calibrations`), or SQL, for example:
-   ```sql
-   select arm, count(*) filter (where outcome in ('interrupted')) * 1.0 / count(*) as interrupted_rate, count(*)
-   from episodes where alert_at is not null and outcome <> 'false_alarm' and pilot_day between 4 and 14
-   group by arm;
-   ```
-6. **No backend:** participants use Settings → **Export pilot log (CSV)** (`episodes.csv`, `sessions.csv`, `events.csv`, same columns) and email the files.
-7. **Deletion requests:** delete rows by `participant_code` in the dashboard.
+## Repository layout
 
-## Manual checklist (run on your own laptops, one Mac and one Windows)
-1. Five real reach-to-hair gestures → at least 4 alerts.
-2. Drink water, rest your chin, adjust glasses and scratch your nose, 3× each → no more than 2 alerts in total.
-3. Switch to another app full-screen for 10 minutes and do 3 gestures → alerts still fire. Record the fps from the debug log (or the popup pill).
-4. Alert-to-sound latency is under 300 ms (event `alert_latency` in the events table or the Debug page).
-5. Export, delete all data, then import → clips and history are restored.
-6. Global shortcuts and notification buttons log feedback while another app is focused.
-7. Open Zoom or Photo Booth to take the camera → badge shows `II`. Close it → detection resumes within 20 s.
-8. Close and reopen Chrome while desk mode was on → desk mode is off and the popup offers a restart (the camera must not auto-start silently).
+`src/core` detection and reminder logic (pure TypeScript) · `src/sync` preference sync · `src/background`
+service worker and account session · `src/offscreen` camera and audio · `src/workers` MediaPipe ·
+`src/app`, `src/popup`, `src/ui` extension pages and design system · `web/` website · `supabase/` migrations and
+local stack · `test/`, `e2e/` tests · `scripts/` build, evaluation and operations helpers · `store/` Chrome Web
+Store texts. Details in [ARCHITECTURE.md](ARCHITECTURE.md).
 
-## Debugging and tuning
-- Settings → Advanced → **Show the debug page** opens `#/debug`: a live overlay (landmarks, zones in face units, r, pinch, pSmooth, state), plus **Record 60 s** (landmarks only), which you can download and replay with `npm run replay -- file.json`.
-- Thresholds live in `src/core/detectorConfig.ts` (Section 15 of the spec).
+## Support
+
+If you are struggling, please reach out. In Singapore:
+- National mindline **1771** (24 hours; WhatsApp +65 6669 1771);
+- Samaritans of Singapore **1767**;
+- emergency **995**.
+
+The TLC Foundation for BFRBs (bfrb.org) and Trichotillomania Support (trichotillomania.co.uk) have information and
+communities.

@@ -106,7 +106,7 @@ the results in PROGRESS.md.
 7. **Voice:** record, preview, save and test a line → reminders use it. Delete it → the chime plays, and the app
    says why.
 8. **Volume:** at 0 it is silent; at 100 it is clear and not distorted.
-9. **Two laptops, one account:** change a setting on each → the other shows it when opened (within a minute).
+9. **Two laptops, one account:** change a setting on each → the other shows it as soon as TrichFree is opened or clicked on.
    Change the same setting on both while one is offline → the notice appears, and no change is lost silently.
 10. **Offline:** turn Wi-Fi off and change a setting → "Offline · will sync". Turn it on → it syncs.
 11. **Data:** export the account (JSON) and a local backup (.zip); delete the account → the local data remains until
