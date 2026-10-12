@@ -94,6 +94,40 @@ test('Laptop A saves → database → Laptop B retrieves and changes → Laptop 
   }
 });
 
+test('session restored after a browser restart; sign out returns to guest mode and keeps this computer\'s settings', async () => {
+  const email = uniqueEmail('returner');
+  const ext = await launch({ dist: DIST_E2E });
+  let again: Ext | null = null;
+  try {
+    const page = await firstPage(ext);
+    await onboard(page);
+    await page.goto(ext.url('#/settings?section=account'));
+    await signInWithCode(page, email, mail);
+    await expect(page.getByTestId('sync-status')).toHaveText('Up to date', { timeout: 15_000 });
+    await page.getByRole('radio', { name: /Visual only/ }).check();
+    await expect.poll(async () => (await prefsInDb(email))?.intervention, { timeout: 15_000 }).toBe('visual');
+    await ext.context.close();
+
+    // Same profile, new browser process: signed in from extension storage, no new code needed, and it syncs.
+    again = await launch({ dist: DIST_E2E, userDataDir: ext.userDataDir });
+    const p = await again.context.newPage();
+    await p.goto(again.url('#/settings?section=account'));
+    await expect(p.getByTestId('account-email')).toHaveText(email, { timeout: 15_000 });
+    await p.getByRole('button', { name: 'Sync now' }).click();
+    await expect(p.getByTestId('sync-status')).toHaveText('Up to date', { timeout: 15_000 });
+
+    // Sign out: guest mode again, the session is gone from storage, and this computer keeps its settings.
+    await p.getByRole('button', { name: 'Sign out' }).click();
+    await p.getByRole('dialog').getByRole('button', { name: 'Sign out' }).click();
+    await expect(p.getByTestId('account-chip')).toContainText('Guest', { timeout: 15_000 });
+    expect(await again.sw.evaluate(async () => Object.keys(await chrome.storage.local.get('tf-auth')).length)).toBe(0);
+    await expect(p.getByRole('radio', { name: /Visual only/ })).toBeChecked();
+  } finally {
+    await again?.context.close();
+    await ext.context.close().catch(() => {});
+  }
+});
+
 test('account export and deletion from the extension', async () => {
   const email = uniqueEmail('leaver');
   const ext = await launch({ dist: DIST_E2E });

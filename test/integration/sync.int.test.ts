@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { MemoryStore, syncPreferences, type LocalSnapshot } from '../../src/sync/engine';
 import { DEFAULT_PREFS, type SyncedPrefs } from '../../src/sync/prefs';
 import { supabaseRemote } from '../../src/sync/remote';
-import { adminClient, signIn, uniqueEmail } from './env';
+import { createClient } from '@supabase/supabase-js';
+import { adminClient, localEnv, signIn, uniqueEmail } from './env';
 
 const guest = (p: Partial<SyncedPrefs> = {}): LocalSnapshot => ({ prefs: { ...DEFAULT_PREFS, ...p }, base: null, dirty: {}, linkedUserId: null });
 
@@ -60,5 +61,22 @@ describe('cross-device sync through the database', () => {
     const out = await syncPreferences(store, supabaseRemote(dev.client), dev.userId, 'extension:cccc');
     expect(out.kind).not.toBe('ok');
     expect(store.snap.dirty.followUp).toBeDefined(); // still queued for the next successful sync
+  });
+
+  it('an unreachable server is reported as "offline" and the change stays queued (then syncs on reconnect)', async () => {
+    const email = uniqueEmail('offline');
+    const dev = await signIn(email);
+    const a = new MemoryStore(guest());
+    expect(await syncPreferences(a, supabaseRemote(dev.client), dev.userId, 'extension:aaaa')).toMatchObject({ kind: 'ok' });
+    a.set('chimeVolume', 35);
+    // The real supabase-js client and error mapping, pointed at a port where nothing listens.
+    const unreachable = createClient('http://127.0.0.1:9', localEnv().anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    expect(await syncPreferences(a, supabaseRemote(unreachable), dev.userId, 'extension:aaaa')).toMatchObject({ kind: 'offline' });
+    expect(a.snap.prefs.chimeVolume).toBe(35);
+    expect(Object.keys(a.snap.dirty)).toEqual(['chimeVolume']);
+    // Back online: the queued change goes out.
+    expect(await syncPreferences(a, supabaseRemote(dev.client), dev.userId, 'extension:aaaa')).toMatchObject({ kind: 'ok', pushed: ['chimeVolume'] });
+    const row = (await adminClient().from('user_preferences').select('chime_volume').eq('user_id', dev.userId).single()).data;
+    expect(row?.chime_volume).toBe(35);
   });
 });
