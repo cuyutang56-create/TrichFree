@@ -8,3 +8,6 @@ public/mediapipe/models
 test-results
 playwright-report
 .DS_Store
+supabase/.temp
+supabase/.branches
+dist-web

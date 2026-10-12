@@ -12,7 +12,7 @@ let extId: string;
 
 test.beforeAll(async () => {
   context = await chromium.launchPersistentContext(mkdtempSync(join(tmpdir(), 'tf-e2e-')), {
-    channel: 'chromium',
+    ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : { channel: 'chromium' }),
     headless: !process.env.HEADED,
     args: [
       `--disable-extensions-except=${DIST}`,

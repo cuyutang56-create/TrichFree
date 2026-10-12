@@ -2,8 +2,9 @@
 // timestamps, labels and numbers. Never media. Checked by test/privacy.test.ts.
 import type { Calibration, Episode } from '../core/types';
 import type { EventRow, SessionRow } from './db';
+import { APP_VERSION } from './config';
 
-export const APP_VERSION = '0.1.0';
+export { APP_VERSION };
 const iso = (t?: number) => (t == null ? null : new Date(t).toISOString());
 
 export function episodeRow(e: Episode, code: string) {
