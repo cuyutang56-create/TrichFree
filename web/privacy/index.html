@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy policy · TrichFree</title>
+    <meta name="description" content="How TrichFree handles your data: camera video is analysed on your device and never uploaded; accounts store only your email, reminder settings and reflections you choose to save." />
+    <meta name="theme-color" content="#6a5aa8" />
+    <link rel="icon" href="/icons/32.png" sizes="32x32" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="TrichFree" />
+    <meta property="og:title" content="TrichFree privacy policy" />
+    <meta property="og:description" content="Camera video is analysed on your device and never uploaded." />
+    <!--seo-->
+    <script type="module" src="../src/site.ts"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="/" aria-label="TrichFree home"><img src="/icons/48.png" alt="" width="32" height="32" /><span>TrichFree</span></a>
+        <nav id="site-nav" class="site-nav" aria-label="Main">
+          <ul><li><a href="/">Home</a></li><li><a class="btn primary" href="/try/">Try TrichFree</a></li></ul>
+        </nav>
+      </div>
+    </header>
+    <main id="main" tabindex="-1" class="wrap narrow doc">
+      <h1>Privacy policy</h1>
+      <p class="muted">Version 2026-10-12. Applies to the TrichFree website, the web account page and the TrichFree browser extension.</p>
+
+      <p>TrichFree helps people with trichotillomania notice possible hand-to-hair movements while they work at a computer. Information about hair pulling can reveal a health condition, so we collect as little as possible and keep the most sensitive things on your own device.</p>
+
+      <h2 id="summary">The short version</h2>
+      <ul>
+        <li><strong>Your camera video never leaves your device.</strong> It is analysed frame by frame and immediately discarded. No video, image or face data is saved or uploaded, ever.</li>
+        <li><strong>Your voice recordings never leave your device.</strong></li>
+        <li><strong>You can use TrichFree without an account.</strong> Then everything stays in your browser.</li>
+        <li><strong>With a free account</strong> we store your email address, your reminder settings, and reflections only if you write and save them.</li>
+        <li><strong>You can download or delete your account data yourself</strong>, at any time, from the account page or the extension.</li>
+        <li>No ads, no tracking, no third-party scripts, and we never sell or share your data for marketing.</li>
+      </ul>
+
+      <h2 id="device">What stays on your device</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col">Data</th><th scope="col">Where</th><th scope="col">Uploaded?</th></tr></thead>
+          <tbody>
+            <tr><td>Camera frames and video</td><td>Processed in memory, never stored</td><td>Never</td></tr>
+            <tr><td>Hand and face landmark points, live detection state</td><td>Memory; optional debug recordings in your browser only</td><td>Never</td></tr>
+            <tr><td>Voice recordings</td><td>Your browser (IndexedDB)</td><td>Never</td></tr>
+            <tr><td>History of reminders, your feedback taps, session times</td><td>Your browser (IndexedDB)</td><td>No (see “Research pilot” for the opt-in exception)</td></tr>
+            <tr><td>Calibration and the personal model trained on your feedback</td><td>Your browser (IndexedDB)</td><td>Never</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Because voice recordings stay on the device you made them on, you record them again on another computer.</p>
+
+      <h2 id="account">What an account stores</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col">Data</th><th scope="col">Why</th><th scope="col">Kept until</th></tr></thead>
+          <tbody>
+            <tr><td>Email address</td><td>To sign you in with a one-time code (no passwords)</td><td>You delete your account</td></tr>
+            <tr><td>Reminder settings (reminder type, volume, sensitivity, areas to watch, quiet time, suggestion text, your supportive words, companion and accessibility choices)</td><td>So your settings follow you between computers</td><td>You delete your account</td></tr>
+            <tr><td>Optional display name; the privacy policy version you accepted and when</td><td>Account management</td><td>You delete your account</td></tr>
+            <tr><td>Reflections you choose to save</td><td>So you can read them on any device</td><td>You delete them or your account</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Each account’s data is protected by row-level security in the database: a signed-in user can only ever read or change their own rows.</p>
+
+      <h2 id="pilot">Pilot interest form</h2>
+      <p>If you register interest in the pilot we store your email address, the role you selected, the optional note you wrote and your confirmations. Only the TrichFree team can read this list. We use it only to contact you about the pilot and delete it within 12 months, or sooner if you ask.</p>
+
+      <h2 id="research">Research pilot (opt-in)</h2>
+      <p>Pilot participants receive an anonymous code from the research team and agree to a separate notice inside the extension. Only then does the extension send: your participant code; the times possible movements were detected; which reminder played; whether your hand came down within 10 seconds; your “Not a pull” and “I just pulled” taps; desk minutes; and calibration quality scores. It never sends video, images or voice. You can stop sending at any time in Settings. The team keeps the link between codes and people offline, separately from this data.</p>
+
+      <h2 id="processors">Who processes data for us</h2>
+      <ul>
+        <li><strong>Supabase</strong> hosts the database and handles sign-in. Data is encrypted in transit (HTTPS) and at rest by the provider.</li>
+        <li><strong>An email delivery provider</strong> sends your one-time sign-in codes.</li>
+        <li><strong>Our website host</strong> serves these pages and, like any web server, briefly processes standard request logs such as IP addresses.</li>
+      </ul>
+      <p>These providers keep short-lived security and service logs (for example, sign-in events with an IP address and time).</p>
+
+      <h2 id="rights">Your choices and rights</h2>
+      <ul>
+        <li><strong>Access and portability:</strong> download everything your account stores as a JSON file (account page, or Settings in the extension).</li>
+        <li><strong>Correction:</strong> change any setting at any time.</li>
+        <li><strong>Deletion:</strong> delete your account in one step. This removes your profile, settings and reflections from the database immediately. Copies in the provider’s encrypted backups are removed when those backups expire (typically within days). Data on your computer is removed separately with “Delete all data on this computer”.</li>
+        <li><strong>Withdrawing consent:</strong> stop pilot data sharing in Settings, or ask us to remove you from the pilot interest list.</li>
+      </ul>
+      <p>You can also contact your local data protection authority (in Singapore, the Personal Data Protection Commission).</p>
+
+      <h2 id="age">Age</h2>
+      <p>TrichFree is meant for people aged 18 or over, or younger people with a parent or guardian helping them.</p>
+
+      <h2 id="security">Security</h2>
+      <p>We use encrypted connections, row-level security on every account table, least-privilege access, strict content security policies and no third-party scripts. No system is perfectly secure; if we ever learn of a breach affecting your data, we will tell you.</p>
+
+      <h2 id="changes">Changes</h2>
+      <p>If this policy changes in a way that matters, we will update the version date above and tell account holders before the change applies.</p>
+
+      <h2 id="contact">Contact</h2>
+      <p>Questions or requests: <span data-contact-line><a data-contact-link href="#">email the TrichFree team</a>, or </span>open an issue on our <a data-github-link href="https://github.com/cuyutang56-create/TrichFree" rel="noopener noreferrer">GitHub page</a> (please don’t post personal details there).</p>
+      <p><a href="/">Back to the home page</a></p>
+    </main>
+  </body>
+</html>

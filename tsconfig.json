@@ -1,7 +1,12 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker.ImportScripts"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable",
+      "WebWorker.ImportScripts"
+    ],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
@@ -13,8 +18,23 @@
     "isolatedModules": true,
     "resolveJsonModule": true,
     "allowImportingTsExtensions": false,
-    "types": ["chrome", "vite/client", "node"],
+    "types": [
+      "chrome",
+      "vite/client",
+      "node"
+    ],
     "noEmit": true
   },
-  "include": ["src", "test", "scripts/*.ts", "manifest.config.ts", "vite.config.ts", "vitest.config.ts", "e2e", "playwright.config.ts"]
+  "include": [
+    "e2e",
+    "manifest.config.ts",
+    "playwright.config.ts",
+    "scripts/*.ts",
+    "src",
+    "test",
+    "vite.config.ts",
+    "vite.web.config.ts",
+    "vitest.config.ts",
+    "web/src"
+  ]
 }

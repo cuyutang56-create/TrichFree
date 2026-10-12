@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
-// Vision worker: MediaPipe HandLandmarker + FaceLandmarker on VideoFrames, then the core pipeline.
-// Touches no chrome.* APIs. Calls frame.close() on every frame.
+// Vision worker: MediaPipe HandLandmarker + FaceLandmarker (+ hair segmenter) on camera frames, then the core
+// pipeline. Frames arrive either as a transferred VideoFrame stream (Chrome/Edge: MediaStreamTrackProcessor) or
+// one ImageBitmap at a time (other browsers). Touches no chrome.* APIs. Closes every frame it receives.
 import { FaceLandmarker, FilesetResolver, HandLandmarker, ImageSegmenter } from '@mediapipe/tasks-vision';
 import { USED_FACE_INDICES } from '../core/faceIndices';
 import { HAIR_CONF, hairContact, smoothContact, type HairMask } from '../core/hair';
@@ -69,106 +70,117 @@ const HAIR_CATEGORY = 1;
 
 const toVec = (l: { x: number; y: number; z: number }): Vec3 => [l.x, l.y, l.z];
 
+// ---------- per-frame state (reset for every new camera stream) ----------
+let lastTs = -1;
+let frameNo = 0;
+let stat = { frames: 0, face: 0, faceRuns: 0, hairRuns: 0, inferMs: 0, since: performance.now() };
+let lastMask: (HairMask & { t: number }) | null = null;
+const prevContact: Record<'Left' | 'Right', number | undefined> = { Left: undefined, Right: undefined };
+
+function resetFrameState() {
+  lastTs = -1;
+  frameNo = 0;
+  stat = { frames: 0, face: 0, faceRuns: 0, hairRuns: 0, inferMs: 0, since: performance.now() };
+  lastMask = null;
+  prevContact.Left = prevContact.Right = undefined;
+}
+
+/** Runs the models and the pipeline on one frame. The caller closes the frame. */
+function processFrame(frame: VideoFrame | ImageBitmap, width: number, height: number, nowPerf: number) {
+  if (!hand || !face || !pipeline) return;
+  const cfg = pipeline.cfg;
+  try {
+    const ts = Math.max(lastTs + 1, Math.round(nowPerf));
+    lastTs = ts;
+    const t0 = performance.now();
+    const hr = hand.detectForVideo(frame, ts);
+    const runFace = frameNo % cfg.faceEveryNFrames === 0;
+    let faceLms: FaceLandmarks | null = null;
+    if (runFace) {
+      stat.faceRuns++;
+      const fr = face.detectForVideo(frame, ts);
+      const lm = fr.faceLandmarks[0];
+      if (lm) {
+        faceLms = {};
+        for (const i of USED_FACE_INDICES) faceLms[i] = toVec(lm[i]);
+        stat.face++;
+      }
+    }
+    const hands: HandObs[] = hr.landmarks.map((lms, i) => ({
+      handedness: (hr.handedness[i]?.[0]?.categoryName as 'Left' | 'Right') ?? 'Right',
+      landmarks: lms.map(toVec),
+    }));
+    if (hairSeg && hands.length) {
+      if (!lastMask || frameNo % HAIR_EVERY_N === 0 || nowPerf - lastMask.t > HAIR_MAX_AGE_MS) {
+        const res = hairSeg.segmentForVideo(frame, ts);
+        const cm = res.confidenceMasks?.[HAIR_CATEGORY];
+        if (cm) {
+          const conf = cm.getAsFloat32Array();
+          const data = new Uint8Array(conf.length);
+          for (let i = 0; i < conf.length; i++) data[i] = conf[i] >= HAIR_CONF ? 1 : 0;
+          lastMask = { width: cm.width, height: cm.height, data, t: nowPerf };
+        }
+        res.close();
+        stat.hairRuns++;
+      }
+      if (lastMask && nowPerf - lastMask.t <= HAIR_MAX_AGE_MS) {
+        for (const h of hands) {
+          const c = smoothContact(prevContact[h.handedness], hairContact(h, lastMask));
+          prevContact[h.handedness] = c;
+          h.hairContact = Math.round(c * 100) / 100;
+        }
+      }
+    } else if (!hands.length) {
+      lastMask = null;
+      prevContact.Left = prevContact.Right = undefined;
+    }
+    stat.inferMs += performance.now() - t0;
+    const input: FrameInput = { t: Math.round(performance.timeOrigin + nowPerf), width, height, hands, face: faceLms, faceRan: runFace };
+    const out = pipeline.process(input);
+    if (out.events.length) post({ type: 'events', events: out.events });
+    if (emitFrames) {
+      post({ type: 'frame', data: { frame: input, features: out.features, tipsUV: out.tipsUV, p: out.p, pSmooth: out.pSmooth, phase: out.phase } });
+    }
+    frameNo++;
+    stat.frames++;
+  } catch (e) {
+    post({ type: 'error', message: `inference: ${String(e)}` });
+  }
+  const el = performance.now() - stat.since;
+  if (el >= 1000) {
+    post({ type: 'stats', stats: {
+      fps: (stat.frames * 1000) / el, delegate, frames: stat.frames,
+      faceSeenRatio: stat.faceRuns ? stat.face / stat.faceRuns : 0, inferMs: stat.frames ? stat.inferMs / stat.frames : 0,
+      hairRuns: stat.hairRuns, hair: !!hairSeg,
+    } });
+    stat = { frames: 0, face: 0, faceRuns: 0, hairRuns: 0, inferMs: 0, since: performance.now() };
+  }
+}
+
 async function loop(readable: ReadableStream<VideoFrame>) {
   await initDone;
   const reader = readable.getReader();
   running = true;
+  resetFrameState();
   // Token bucket: earn targetFps tokens per second (capped at 1.5 to absorb camera jitter); a frame costs 1.
   let allowance = 1;
   let lastArrival = performance.now();
-  let lastTs = -1;
-  let frameNo = 0;
-  let stat = { frames: 0, face: 0, faceRuns: 0, hairRuns: 0, inferMs: 0, since: performance.now() };
-  let lastMask: (HairMask & { t: number }) | null = null;
-  const prevContact: Record<'Left' | 'Right', number | undefined> = { Left: undefined, Right: undefined };
-
   while (running) {
     const { value: frame, done } = await reader.read();
     if (done || !frame) break;
     const nowPerf = performance.now();
-    const cfg = pipeline!.cfg;
     // Frame skipping: at most targetFps on average; never queue frames.
-    allowance = Math.min(1.5, allowance + ((nowPerf - lastArrival) * cfg.targetFps) / 1000);
+    allowance = Math.min(1.5, allowance + ((nowPerf - lastArrival) * pipeline!.cfg.targetFps) / 1000);
     lastArrival = nowPerf;
     if (allowance < 1 || !hand || !face) { frame.close(); continue; }
     allowance -= 1;
-    try {
-      const ts = Math.max(lastTs + 1, Math.round(nowPerf));
-      lastTs = ts;
-      const t0 = performance.now();
-      const hr = hand.detectForVideo(frame, ts);
-      const runFace = frameNo % cfg.faceEveryNFrames === 0;
-      let faceLms: FaceLandmarks | null = null;
-      if (runFace) {
-        stat.faceRuns++;
-        const fr = face.detectForVideo(frame, ts);
-        const lm = fr.faceLandmarks[0];
-        if (lm) {
-          faceLms = {};
-          for (const i of USED_FACE_INDICES) faceLms[i] = toVec(lm[i]);
-          stat.face++;
-        }
-      }
-      const hands: HandObs[] = hr.landmarks.map((lms, i) => ({
-        handedness: (hr.handedness[i]?.[0]?.categoryName as 'Left' | 'Right') ?? 'Right',
-        landmarks: lms.map(toVec),
-      }));
-      if (hairSeg && hands.length) {
-        if (!lastMask || frameNo % HAIR_EVERY_N === 0 || nowPerf - lastMask.t > HAIR_MAX_AGE_MS) {
-          const res = hairSeg.segmentForVideo(frame, ts);
-          const cm = res.confidenceMasks?.[HAIR_CATEGORY];
-          if (cm) {
-            const conf = cm.getAsFloat32Array();
-            const data = new Uint8Array(conf.length);
-            for (let i = 0; i < conf.length; i++) data[i] = conf[i] >= HAIR_CONF ? 1 : 0;
-            lastMask = { width: cm.width, height: cm.height, data, t: nowPerf };
-          }
-          res.close();
-          stat.hairRuns++;
-        }
-        if (lastMask && nowPerf - lastMask.t <= HAIR_MAX_AGE_MS) {
-          for (const h of hands) {
-            const c = smoothContact(prevContact[h.handedness], hairContact(h, lastMask));
-            prevContact[h.handedness] = c;
-            h.hairContact = Math.round(c * 100) / 100;
-          }
-        }
-      } else if (!hands.length) {
-        lastMask = null;
-        prevContact.Left = prevContact.Right = undefined;
-      }
-      stat.inferMs += performance.now() - t0;
-      const input: FrameInput = {
-        t: Math.round(performance.timeOrigin + nowPerf), width: frame.displayWidth, height: frame.displayHeight,
-        hands, face: faceLms, faceRan: runFace,
-      };
-      const out = pipeline!.process(input);
-      if (out.events.length) post({ type: 'events', events: out.events });
-      if (emitFrames) {
-        post({ type: 'frame', data: { frame: input, features: out.features, tipsUV: out.tipsUV, p: out.p, pSmooth: out.pSmooth, phase: out.phase } });
-      }
-      frameNo++;
-      stat.frames++;
-    } catch (e) {
-      post({ type: 'error', message: `inference: ${String(e)}` });
-    } finally {
-      frame.close();
-    }
-    const el = performance.now() - stat.since;
-    if (el >= 1000) {
-      post({ type: 'stats', stats: {
-        fps: (stat.frames * 1000) / el, delegate, frames: stat.frames,
-        faceSeenRatio: stat.faceRuns ? stat.face / stat.faceRuns : 0, inferMs: stat.frames ? stat.inferMs / stat.frames : 0,
-        hairRuns: stat.hairRuns, hair: !!hairSeg,
-      } });
-      stat = { frames: 0, face: 0, faceRuns: 0, hairRuns: 0, inferMs: 0, since: performance.now() };
-    }
+    try { processFrame(frame, frame.displayWidth, frame.displayHeight, nowPerf); } finally { frame.close(); }
   }
   try { reader.releaseLock(); } catch { /* ignore */ }
   if (running) post({ type: 'streamEnded' });
 }
 
-self.onmessage = (e: MessageEvent<WorkerIn>) => {
+self.onmessage = async (e: MessageEvent<WorkerIn>) => {
   const m = e.data;
   switch (m.type) {
     case 'init':
@@ -178,6 +190,13 @@ self.onmessage = (e: MessageEvent<WorkerIn>) => {
       break;
     case 'stream':
       loop(m.readable).catch((err) => post({ type: 'error', message: `loop: ${String(err)}` }));
+      break;
+    case 'bitmap':
+      // One frame at a time; the page waits for 'done' before sending the next (natural back-pressure).
+      await initDone;
+      if (!running) { running = true; resetFrameState(); }
+      try { processFrame(m.bitmap, m.bitmap.width, m.bitmap.height, performance.now()); } finally { m.bitmap.close(); }
+      post({ type: 'done' });
       break;
     case 'update':
       if (pipeline) {

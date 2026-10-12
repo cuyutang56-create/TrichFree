@@ -53,16 +53,16 @@ export const offscreenCount = (ext: Ext) =>
   ext.sw.evaluate(async () => (await chrome.runtime.getContexts({ contextTypes: ['OFFSCREEN_DOCUMENT' as chrome.runtime.ContextType] })).length);
 
 export const deskState = (ext: Ext) =>
-  ext.sw.evaluate(async () => (await chrome.storage.local.get('deskState')).deskState as { wanted: boolean; status: string; fps: number; delegate?: string; stopReason?: string; interrupted?: boolean });
+  ext.sw.evaluate(async () => (await chrome.storage.local.get('deskState')).deskState as { wanted: boolean; status: string; fps: number; delegate?: string; stopReason?: string; interrupted?: boolean; lastHeartbeat?: number });
 
 export const badge = (ext: Ext) => ext.sw.evaluate(() => chrome.action.getBadgeText({}));
 
 /** Signs in through the UI with a real one-time code read from the local mail catcher (Mailpit). */
-export async function signInWithCode(page: Page, email: string, readCode: (email: string, since: number) => Promise<string>) {
-  await page.getByLabel('Email').fill(email);
-  const since = Date.now();
+export async function signInWithCode(page: Page, email: string, mail: { mailIds: (email: string) => Promise<Set<string>>; readCode: (email: string, seen: Set<string>) => Promise<string> }) {
+  await page.getByLabel('Email', { exact: true }).fill(email);
+  const seen = await mail.mailIds(email);
   await page.getByRole('button', { name: 'Email me a code' }).click();
-  const code = await readCode(email, since);
+  const code = await mail.readCode(email, seen);
   await page.getByLabel('6-digit code').fill(code);
   await page.getByRole('button', { name: 'Sign in' }).click();
 }

@@ -5,7 +5,8 @@
 import { expect, test } from '@playwright/test';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { adminClient, readCode, uniqueEmail } from '../test/integration/env';
+import { adminClient, mailIds, readCode, uniqueEmail } from '../test/integration/env';
+const mail = { mailIds, readCode };
 import { firstPage, launch, onboard, signInWithCode, type Ext } from './helpers';
 
 const DIST_E2E = resolve('dist-e2e');
@@ -30,7 +31,7 @@ test('Laptop A saves → database → Laptop B retrieves and changes → Laptop 
     await onboard(pa);
     await expect(pa.getByTestId('account-chip')).toContainText('Guest');
     await pa.goto(A.url('#/settings?section=account'));
-    await signInWithCode(pa, email, readCode);
+    await signInWithCode(pa, email, mail);
     await expect(pa.getByTestId('account-email')).toHaveText(email);
     await expect(pa.getByTestId('sync-status')).toHaveText('Up to date', { timeout: 15_000 });
 
@@ -44,7 +45,7 @@ test('Laptop A saves → database → Laptop B retrieves and changes → Laptop 
     B = await launch({ dist: DIST_E2E });
     const pb = await firstPage(B);
     await pb.getByRole('button', { name: 'Sign in to bring your settings' }).click();
-    await signInWithCode(pb, email, readCode);
+    await signInWithCode(pb, email, mail);
     await expect(pb.getByText(`Signed in as ${email}`)).toBeVisible({ timeout: 15_000 });
     await pb.getByRole('button', { name: 'Continue' }).click();
     await expect(pb.getByRole('radio', { name: /Visual only/ })).toBeChecked({ timeout: 15_000 });
@@ -91,7 +92,7 @@ test('account export and deletion from the extension', async () => {
     const page = await firstPage(ext);
     await onboard(page);
     await page.goto(ext.url('#/settings?section=account'));
-    await signInWithCode(page, email, readCode);
+    await signInWithCode(page, email, mail);
     await expect(page.getByTestId('sync-status')).toHaveText('Up to date', { timeout: 15_000 });
     const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download my account data' }).click()]);
     const exported = JSON.parse(readFileSync((await download.path())!, 'utf8'));

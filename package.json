@@ -18,7 +18,10 @@
     "test:integration": "vitest run -c vitest.integration.config.ts",
     "db:start": "supabase start",
     "db:reset": "supabase db reset",
-    "db:stop": "supabase stop"
+    "db:stop": "supabase stop",
+    "build:web": "tsc --noEmit && vite build -c vite.web.config.ts",
+    "dev:web": "vite -c vite.web.config.ts",
+    "preview:web": "vite preview -c vite.web.config.ts"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^1.0.1",
@@ -29,6 +32,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@crxjs/vite-plugin": "^3.0.0",
     "@playwright/test": "^1.63.0",
     "@types/chrome": "^0.3.4",

@@ -1,5 +1,7 @@
 /* Base styles and components shared by the extension pages and the website. Requires tokens.css. */
 *, *::before, *::after { box-sizing: border-box; }
+/* Components set display:flex/grid; never let that override the hidden attribute. */
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 400 16px/1.55 var(--font); }
 img, svg { max-width: 100%; }

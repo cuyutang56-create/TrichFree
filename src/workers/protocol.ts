@@ -6,6 +6,8 @@ import type { OverlayFrame } from '../shared/messages';
 export type WorkerIn =
   | { type: 'init'; wasmBase: string; handModel: string; faceModel: string; hairModel?: string; cfg: DetectorConfig; calib: Calibration | null; zones: ZoneId[]; emitFrames: boolean }
   | { type: 'stream'; readable: ReadableStream<VideoFrame> }
+  /** Fallback for browsers without MediaStreamTrackProcessor: one frame at a time. */
+  | { type: 'bitmap'; bitmap: ImageBitmap }
   | { type: 'update'; cfg?: DetectorConfig; calib?: Calibration | null; zones?: ZoneId[]; emitFrames?: boolean; model?: PersonalModel | null }
   | { type: 'stop' };
 
@@ -17,4 +19,6 @@ export type WorkerOut =
   | { type: 'stats'; stats: WorkerStats }
   | { type: 'frame'; data: OverlayFrame }
   | { type: 'streamEnded' }
+  /** A 'bitmap' frame was processed; the page may send the next one. */
+  | { type: 'done' }
   | { type: 'error'; message: string };
