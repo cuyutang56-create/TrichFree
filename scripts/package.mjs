@@ -1,7 +1,7 @@
-// Zips dist/ into release/trichfree-desk-v<version>.zip for the Chrome Web Store (or "Load unpacked" pilots).
+// Zips dist/ into release/trichfree-desk-v<version>.zip (or --out <path>) for the Chrome Web Store or "Load unpacked" pilots.
 import JSZip from 'jszip';
 import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import { releaseProblems } from './release-check.mjs';
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
@@ -26,7 +26,8 @@ const walk = (dir) => {
   }
 };
 walk('dist');
-mkdirSync('release', { recursive: true });
-const out = `release/trichfree-desk-v${pkg.version}.zip`;
+const outAt = process.argv.indexOf('--out');
+const out = outAt > 0 ? process.argv[outAt + 1] : `release/trichfree-desk-v${pkg.version}.zip`; // --out: e.g. the website's downloads folder
+mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 9 } }));
 console.log(`[package] ${out} (${(statSync(out).size / 1e6).toFixed(1)} MB)`);

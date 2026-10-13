@@ -1,9 +1,12 @@
 # Netlify: builds and serves the public website (landing page, /privacy/, /try/, /app/).
 # Security headers (CSP, HSTS, frame and permissions policies) come from the generated dist-web/_headers.
 # Set the VITE_* variables in Site configuration → Environment variables (see DEPLOYMENT.md); never a secret key.
+# The extension is built from the same commit and offered as a "Load unpacked" download at /downloads/
+# (remove VITE_EXTENSION_DOWNLOAD_URL and the last two build steps to stop offering it).
 [build]
-  command = "npm run build:web"
+  command = "npm run build:web && npm run build && node scripts/package.mjs --out dist-web/downloads/trichfree-extension.zip"
   publish = "dist-web"
 
 [build.environment]
   NODE_VERSION = "22"
+  VITE_EXTENSION_DOWNLOAD_URL = "/downloads/trichfree-extension.zip"

@@ -201,12 +201,22 @@
       <section id="extension" aria-labelledby="ext-h">
         <div class="wrap narrow">
           <h2 id="ext-h">Use it every day</h2>
-          <p>The everyday version of TrichFree is a browser extension for Chrome and Edge. It keeps watching quietly while you use any app, and your settings can follow you between computers with a free account.</p>
+          <p>The everyday version of TrichFree is a browser extension for Chrome and Edge. It keeps watching quietly while you use any app<span data-needs-accounts>, and your settings can follow you between computers with a free account</span>.</p>
           <div id="ext-detected" class="notice ok" hidden data-needs-accounts><p class="notice-body">TrichFree is installed in this browser. <a href="/app/">Open your account</a> to manage settings across devices.</p></div>
           <div class="row">
             <a id="ext-store" class="btn primary" hidden href="#">Add to Chrome</a>
-            <a id="ext-download" class="btn" hidden href="#">Download the pilot build</a>
+            <a id="ext-download" class="btn" hidden href="#" download>Download the extension</a>
             <a id="ext-pilot" class="btn" href="#pilot" data-needs-accounts>Get it through the pilot</a>
+          </div>
+          <div id="ext-install" class="install" hidden>
+            <h3>Install it in about two minutes</h3>
+            <p class="small muted">Chrome or Edge on a laptop or desktop. Everything runs on your computer.</p>
+            <ol>
+              <li>Download the zip file and unzip it.</li>
+              <li>Open <code>chrome://extensions</code> (in Edge: <code>edge://extensions</code>) and switch on <strong>Developer mode</strong>.</li>
+              <li>Click <strong>Load unpacked</strong> and choose the unzipped folder.</li>
+              <li>TrichFree opens its welcome page. Allow the camera when asked, then play the test reminder.</li>
+            </ol>
           </div>
           <p class="small muted">Status: prototype in pilot preparation. It is not yet in the Chrome Web Store.</p>
         </div>

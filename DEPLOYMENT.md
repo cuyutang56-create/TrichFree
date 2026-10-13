@@ -97,6 +97,12 @@ these in any `VITE_*` variable, `.env` file, repository, CI variable used by a c
 `dist-web`, Node 22). Both apply the generated `dist-web/_headers`: CSP, HSTS, frame and permissions policies.
 GitHub Pages and plain object storage cannot send these headers, so do not use them.
 
+`netlify.toml` also builds the extension from the same commit and offers it at
+`/downloads/trichfree-extension.zip`, with "Load unpacked" steps on the landing page (`VITE_EXTENSION_DOWNLOAD_URL`).
+That is for demos and pilots before the store listing. To stop offering it, remove that variable and the last two
+build steps. A website built without `VITE_SUPABASE_URL` leaves out sign-in and the pilot form, so a demo copy has no
+dead ends.
+
 1. Connect the repository. Production branch: `main`. Preview or branch deploys go to **staging**.
 2. Set the build variables per environment:
    - production on production deploys, staging on previews;

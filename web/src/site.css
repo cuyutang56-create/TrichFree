@@ -45,6 +45,11 @@ section h2 { font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem); }
 
 .split { display: grid; gap: 40px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; }
 .quote-card { margin: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; }
+/* Extension install steps (shown only when a download is offered) */
+.install { margin-block: 20px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 24px; }
+.install h3 { margin: 0 0 4px; font-size: 1.1rem; }
+.install ol { margin: 12px 0 0; padding-left: 1.3em; display: grid; gap: 8px; }
+.install code { font-size: 0.92em; background: var(--surface-2); padding: 1px 6px; border-radius: 6px; overflow-wrap: anywhere; }
 .quote-card blockquote { margin: 0 0 12px; font-size: 1.6rem; line-height: 1.3; color: var(--text); }
 .mochi-art { width: min(220px, 60vw); height: auto; justify-self: center; }
 

@@ -33,7 +33,13 @@ function setupLinks() {
   const store = $<HTMLAnchorElement>('#ext-store');
   if (store && SITE.storeUrl) { store.href = SITE.storeUrl; store.hidden = false; }
   const dl = $<HTMLAnchorElement>('#ext-download');
-  if (dl && SITE.downloadUrl) { dl.href = SITE.downloadUrl; dl.hidden = false; }
+  if (dl && SITE.downloadUrl) {
+    dl.href = SITE.downloadUrl;
+    dl.hidden = false;
+    if (!SITE.storeUrl) dl.classList.add('primary');
+    const steps = $<HTMLElement>('#ext-install');
+    if (steps) steps.hidden = false;
+  }
 }
 
 async function setupExtension() {

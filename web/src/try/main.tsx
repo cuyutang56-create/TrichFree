@@ -163,7 +163,7 @@ function Demo() {
         <p>The TrichFree browser extension keeps watching quietly in the background while you use any app, remembers your recordings, and learns from your feedback. It is in pilot preparation now.</p>
         <div className="row">
           {SITE.accounts && <a className="btn primary" href="/#pilot">Join the pilot</a>}
-          <a className={`btn${SITE.accounts ? '' : ' primary'}`} href="/#extension">About the extension</a>
+          <a className={`btn${SITE.accounts ? '' : ' primary'}`} href="/#extension">{SITE.downloadUrl || SITE.storeUrl ? 'Get the extension' : 'About the extension'}</a>
           <a className="btn ghost" href="/privacy/">How your privacy is protected</a>
         </div>
         <p className="small muted">TrichFree notices possible hand-to-hair movements. It cannot tell every pull apart from ordinary touching, and it is not a medical device.</p>
