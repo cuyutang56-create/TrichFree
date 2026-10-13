@@ -101,6 +101,12 @@ function setupPilotForm() {
   });
 }
 
+/** A build without a backend (for example a demo copy) leaves out sign-in and the pilot form instead of showing dead ends. */
+function removeAccountFeatures() {
+  if (!SITE.accounts) for (const el of $$<HTMLElement>('[data-needs-accounts]')) el.remove();
+}
+
+removeAccountFeatures();
 setupNav();
 setupLinks();
 setupPilotForm();

@@ -15,6 +15,7 @@ import { processClip } from '../../../src/core/audioProcess';
 import { microPromptText } from '../../../src/sync/prefs';
 import { Choices, Notice, Seg } from '../../../src/ui/controls';
 import { SiteHeader } from '../SiteHeader';
+import { SITE } from '../config';
 
 const ZONES: ZoneId[] = ['crown', 'hairline', 'sides', 'strands'];
 type Reminder = 'chime' | 'voice' | 'visual';
@@ -161,8 +162,8 @@ function Demo() {
         <h2 id="try-next">Want this while you work?</h2>
         <p>The TrichFree browser extension keeps watching quietly in the background while you use any app, remembers your recordings, and learns from your feedback. It is in pilot preparation now.</p>
         <div className="row">
-          <a className="btn primary" href="/#pilot">Join the pilot</a>
-          <a className="btn" href="/#extension">About the extension</a>
+          {SITE.accounts && <a className="btn primary" href="/#pilot">Join the pilot</a>}
+          <a className={`btn${SITE.accounts ? '' : ' primary'}`} href="/#extension">About the extension</a>
           <a className="btn ghost" href="/privacy/">How your privacy is protected</a>
         </div>
         <p className="small muted">TrichFree notices possible hand-to-hair movements. It cannot tell every pull apart from ordinary touching, and it is not a medical device.</p>

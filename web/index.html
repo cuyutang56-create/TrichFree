@@ -28,8 +28,8 @@
             <li><a href="#privacy">Privacy</a></li>
             <li><a href="#mochi">Mochi</a></li>
             <li><a href="#story">Our story</a></li>
-            <li><a href="#pilot">Pilot</a></li>
-            <li><a class="btn" href="/app/">Sign in</a></li>
+            <li data-needs-accounts><a href="#pilot">Pilot</a></li>
+            <li data-needs-accounts><a class="btn" href="/app/">Sign in</a></li>
             <li><a class="btn primary" href="/try/">Try TrichFree</a></li>
           </ul>
         </nav>
@@ -160,7 +160,7 @@
         </div>
       </section>
 
-      <section id="pilot" class="band" aria-labelledby="pilot-h">
+      <section id="pilot" class="band" aria-labelledby="pilot-h" data-needs-accounts>
         <div class="wrap narrow">
           <h2 id="pilot-h">Join the pilot</h2>
           <p>We are looking for people who live with trichotillomania and spend time at a laptop, to try TrichFree for two weeks and tell us honestly what works and what does not. Parents and clinicians are welcome to register interest too.</p>
@@ -202,11 +202,11 @@
         <div class="wrap narrow">
           <h2 id="ext-h">Use it every day</h2>
           <p>The everyday version of TrichFree is a browser extension for Chrome and Edge. It keeps watching quietly while you use any app, and your settings can follow you between computers with a free account.</p>
-          <div id="ext-detected" class="notice ok" hidden><p class="notice-body">TrichFree is installed in this browser. <a href="/app/">Open your account</a> to manage settings across devices.</p></div>
+          <div id="ext-detected" class="notice ok" hidden data-needs-accounts><p class="notice-body">TrichFree is installed in this browser. <a href="/app/">Open your account</a> to manage settings across devices.</p></div>
           <div class="row">
             <a id="ext-store" class="btn primary" hidden href="#">Add to Chrome</a>
             <a id="ext-download" class="btn" hidden href="#">Download the pilot build</a>
-            <a id="ext-pilot" class="btn" href="#pilot">Get it through the pilot</a>
+            <a id="ext-pilot" class="btn" href="#pilot" data-needs-accounts>Get it through the pilot</a>
           </div>
           <p class="small muted">Status: prototype in pilot preparation. It is not yet in the Chrome Web Store.</p>
         </div>

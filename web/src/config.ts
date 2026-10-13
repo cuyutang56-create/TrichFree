@@ -11,4 +11,6 @@ export const SITE = {
   downloadUrl: env.VITE_EXTENSION_DOWNLOAD_URL || undefined,
   /** Extension ids allowed to answer the website (Chrome Web Store id and/or a pinned pilot build id). */
   extensionIds: list(env.VITE_EXTENSION_IDS),
+  /** True when this build has a backend: accounts, sign-in and the pilot form. Without one they are left out. */
+  accounts: !!(env.VITE_SUPABASE_URL && (env.VITE_SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_ANON_KEY)),
 };

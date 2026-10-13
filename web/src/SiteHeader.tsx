@@ -1,3 +1,5 @@
+import { SITE } from './config';
+
 // Header for the React pages of the website (the static pages have the same markup in HTML).
 export function SiteHeader({ right }: { right?: React.ReactNode }) {
   return (
@@ -10,7 +12,7 @@ export function SiteHeader({ right }: { right?: React.ReactNode }) {
             <ul>
               <li><a href="/#how">How it works</a></li>
               <li><a href="/privacy/">Privacy</a></li>
-              {right ?? <li><a className="btn" href="/app/">Sign in</a></li>}
+              {right ?? (SITE.accounts ? <li><a className="btn" href="/app/">Sign in</a></li> : null)}
             </ul>
           </nav>
         </div>
