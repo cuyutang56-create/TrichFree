@@ -126,6 +126,21 @@ describe('engine', () => {
     const ids = h.plays().flatMap((p) => (p.sound === 'clip' ? [p.clipId] : []));
     expect(ids[0]).not.toBe(ids[1]);
   });
+  it('with one recorded line, every reminder in a session plays it, not only the first (regression)', () => {
+    // Onboarding records a single line. The no-repeat rule is for the follow-up within one episode; it must not
+    // silence the voice for every later episode of the session.
+    const one: ClipMeta[] = [{ id: 'mine', category: 'notice', createdAt: 1, playCount: 0 }];
+    const h = new Harness({ ...ctx('VOICE', false), clips: one });
+    for (let k = 0; k < 3; k++) {
+      const t0 = k * 100_000;
+      h.send({ type: 'candidateStart', t: t0, zone: 'crown' }, t0);
+      h.send({ type: 'alertThresholdReached', t: t0 + 1500, stats }, t0 + 1500);
+      h.send({ type: 'handLeft', t: t0 + 3000, leftAt: t0 + 2900, stats }, t0 + 3000);
+      h.send({ type: 'tick', t: t0 + 60_000 }, t0 + 60_000); // quiet time over
+    }
+    const clipsPlayed = h.plays().filter((p) => p.sound === 'clip').map((p) => (p as { clipId: string }).clipId);
+    expect(clipsPlayed).toEqual(['mine', 'mine', 'mine']);
+  });
 
   const states: EnginePhase[] = ['IDLE', 'CANDIDATE', 'ALERT_1', 'ALERT_2', 'PERSIST', 'COOLDOWN'];
   for (const st of states) {

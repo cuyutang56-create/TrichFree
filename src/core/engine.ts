@@ -155,7 +155,9 @@ function playAlert(s: EngineState, alertNo: 1 | 2, now: number, ctx: EngineConte
   const chime = alertNo === 1 || !voice;
   if (chime) effects.push({ type: 'play', sound: 'chime' });
   if (voice) {
-    const clip = pickClip(ctx.clips, alertNo, s.lastClipId);
+    // Only the follow-up avoids the clip just played. A new episode may replay it: with a single recorded line
+    // (what onboarding records) the voice would otherwise play once per session and then only the chime.
+    const clip = pickClip(ctx.clips, alertNo, alertNo === 2 ? s.lastClipId : undefined);
     if (clip) {
       effects.push({ type: 'play', sound: 'clip', clipId: clip.id, delayMs: chime ? ctx.chimeMs + ctx.chimeToClipGapMs : 0 });
       effects.push({ type: 'clipPlayed', clipId: clip.id, t: now });
