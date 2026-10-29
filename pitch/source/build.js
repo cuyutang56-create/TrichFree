@@ -11,7 +11,7 @@ const A = (f) => path.join(__dirname, 'assets', f);
 const OUT = process.argv[2] || path.join(__dirname, 'TrichFree_NUSC_Pitch.pptx');
 
 // TrichFree brand tokens (src/ui/tokens.css) + highlight yellow used for "the moment" motif.
-const HEX = { ink: '2A2640', white: 'FFFFFF', strong: '56478F', paper: 'FBF8F4', accent: '6A5AA8', green: '3F8A63', yellow: 'F6C453', soft: 'ECE7F8', lilac: 'B5A8EC', muted: '5F5A75', mid: '8E7CD6', pale: 'C9BFF3', night: '363245' };
+const HEX = { ink: '2A2640', white: 'FFFFFF', strong: '56478F', paper: 'FBF8F4', accent: '6A5AA8', green: '3F8A63', yellow: 'F6C453', soft: 'ECE7F8', lilac: 'B5A8EC', muted: '4A4560', mid: '8E7CD6', pale: 'C9BFF3', night: '353245', bg: '433475' };
 const THEME = {
   name: 'TrichFree', headFontFace: 'Calibri', bodyFontFace: 'Calibri',
   colors: { dk1: HEX.ink, lt1: HEX.white, dk2: HEX.strong, lt2: HEX.paper, accent1: HEX.accent, accent2: HEX.green, accent3: HEX.yellow, accent4: HEX.soft, accent5: HEX.lilac, accent6: HEX.muted, hlink: HEX.accent, folHlink: HEX.strong },
@@ -34,18 +34,18 @@ async function icon(Comp, color, size = 256) {
   const footer = (dark) => ({ text: { text: 'TrichFree  ·  NUSC Impact Incubator 2026', options: { x: 0.6, y: 7.02, w: 6, h: 0.3, fontSize: 10, color: dark ? C.accent5 : C.accent6, margin: 0 } } });
   pres.defineSlideMaster({
     title: 'TF_LIGHT', background: { color: HEX.paper },
-    objects: [footer(false)],
+    objects: [],
     slideNumber: { x: 12.3, y: 7.02, w: 0.5, h: 0.3, fontSize: 10, color: HEX.muted, align: 'right' },
     placeholders: [],
   });
   pres.defineSlideMaster({
     title: 'TF_LIGHT_TITLE', background: { color: HEX.paper },
-    objects: [footer(false), { placeholder: { options: { name: 'title', type: 'title', x: 0.6, y: 0.4, w: 12.1, h: 0.85, fontSize: 36, bold: true, color: C.text1, valign: 'middle', align: 'left', margin: 0 }, text: '' } }],
+    objects: [{ placeholder: { options: { name: 'title', type: 'title', x: 0.6, y: 0.4, w: 12.1, h: 0.85, fontSize: 36, bold: true, color: C.text1, valign: 'middle', align: 'left', margin: 0 }, text: '' } }],
     slideNumber: { x: 12.3, y: 7.02, w: 0.5, h: 0.3, fontSize: 10, color: HEX.muted, align: 'right' },
   });
   pres.defineSlideMaster({
-    title: 'TF_DARK', background: { color: HEX.ink },
-    objects: [footer(true)],
+    title: 'TF_DARK', background: { color: HEX.bg },
+    objects: [],
     slideNumber: { x: 12.3, y: 7.02, w: 0.5, h: 0.3, fontSize: 10, color: HEX.lilac, align: 'right' },
   });
 
@@ -61,13 +61,12 @@ async function icon(Comp, color, size = 256) {
   // ---------------- 1. Hook ----------------
   pres.addSection({ title: 'Problem' });
   let s = pres.addSlide({ masterName: 'TF_DARK', sectionTitle: 'Problem' });
-  s.addImage({ path: path.join('/tmp/claude-0/ra/repo/public/icons/128.png'), x: 0.7, y: 0.66, w: 0.34, h: 0.34, altText: 'TrichFree logo', objectName: 'Logo' });
-  T(s, 'TRICHFREE  ·  NUSC IMPACT INCUBATOR 2026', { x: 1.15, y: 0.7, w: 6, h: 0.3, fontSize: 12, bold: true, color: C.accent5, charSpacing: 2, objectName: 'Eyebrow' });
-  T(s, 'It starts before you notice', { x: 0.7, y: 1.55, w: 6.4, h: 2.1, fontSize: 54, bold: true, color: C.background1, fontFace: '+mj-lt', valign: 'bottom', objectName: 'Headline' });
-  T(s, 'Studying. Reading. Working. And somewhere in the middle, a hand drifts to the hair.', { x: 0.7, y: 3.95, w: 5.9, h: 1.0, fontSize: 20, color: HEX.pale, objectName: 'Sub' });
-  T(s, [{ text: 'TrichFree: when your hand moves, ', options: { color: C.background1 } }, { text: 'support responds.', options: { color: C.accent3 } }], { x: 0.7, y: 5.4, w: 6.2, h: 0.5, fontSize: 22, bold: true, objectName: 'Tagline' });
-  s.addImage({ path: A('hero.png'), x: 7.0, y: 1.0, w: 5.9, h: 5.6, altText: 'Line drawing: a student at a laptop late at night, one hand raised to the crown of the head, circled', objectName: 'Hero illustration' });
-  T(s, '11:42 pm', { x: 10.6, y: 0.7, w: 2.1, h: 0.5, fontSize: 26, bold: true, color: C.accent3, align: 'right', objectName: 'Clock' });
+  s.addImage({ path: A('wordmark.png'), x: 0.7, y: 0.6, w: 2.7, h: 0.6, altText: 'TrichFree logo', objectName: 'Wordmark' });
+  T(s, '11:42 PM  ·  STUDYING', { x: 0.7, y: 2.0, w: 6, h: 0.35, fontSize: 14, bold: true, color: C.accent3, charSpacing: 3, objectName: 'Scene label' });
+  T(s, [{ text: 'It starts', options: { color: C.background1, breakLine: true } }, { text: 'before you notice', options: { color: C.accent3 } }], { x: 0.7, y: 2.45, w: 6.6, h: 2.2, fontSize: 58, bold: true, fontFace: '+mj-lt', valign: 'middle', objectName: 'Headline' });
+  T(s, [{ text: 'When your hand moves, ', options: { color: C.background1 } }, { text: 'support responds.', options: { color: C.accent3 } }], { x: 0.7, y: 4.9, w: 6.6, h: 0.55, fontSize: 24, bold: true, objectName: 'Tagline' });
+  T(s, 'NUSC IMPACT INCUBATOR 2026', { x: 0.7, y: 6.5, w: 6, h: 0.35, fontSize: 13, bold: true, color: C.accent5, charSpacing: 4, objectName: 'Event' });
+  s.addImage({ path: A('hero.png'), x: 7.0, y: 0.95, w: 5.9, h: 5.6, altText: 'Line drawing: a student at a laptop late at night, one hand raised to the crown of the head, circled', objectName: 'Hero illustration' });
   s.addNotes(`[~25 s] Open with a pause.
 "Quick question: did you touch your hair in the last five minutes? ... Most of us honestly don't know — and for most of us it doesn't matter. But for about one in sixty adults, that unnoticed touch is where trichotillomania begins: hair pulling they desperately want to stop, and often don't notice starting. We're TrichFree, and we build support for exactly that moment."
 
@@ -75,21 +74,34 @@ Notes: "1 in 60" = 1.7% current prevalence (Grant, Dougherty & Chamberlain 2020,
 
   // ---------------- 2. Unmet need ----------------
   s = pres.addSlide({ masterName: 'TF_LIGHT_TITLE', sectionTitle: 'Problem' });
-  s.addText('Help arrives after the moment has passed', { placeholder: 'title' });
-  const stats = [['1.7%', 'of adults live with trichotillomania: about 1 in 60'], ['17.7', 'mean age it begins, right at university age'], ['1 in 4', 'report daily interference with their work']];
-  stats.forEach(([n, c], i) => {
-    const y = 1.6 + i * 1.42;
-    T(s, n, { x: 0.6, y, w: 4.6, h: 0.72, fontSize: 44, bold: true, color: C.accent1, objectName: `Stat ${i + 1}` });
-    T(s, c, { x: 0.6, y: y + 0.74, w: 4.6, h: 0.5, fontSize: 15, color: C.text1, objectName: `Stat ${i + 1} caption` });
-  });
-  T(s, 'Sources: Grant, Dougherty & Chamberlain, Psychiatry Res. 2020 (n = 10,169); Woods et al., Trichotillomania Impact Project, J Clin Psychiatry 2006.', { x: 0.6, y: 5.9, w: 4.6, h: 0.5, fontSize: 10, color: C.accent6, objectName: 'Stat sources' });
-  s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 5.6, y: 1.6, w: 7.1, h: 4.3, rectRadius: 0.25, fill: { color: C.accent4 }, line: { type: 'none' }, objectName: 'Quote panel' });
-  T(s, '“', { x: 5.95, y: 1.55, w: 1, h: 1.0, fontSize: 96, bold: true, color: C.accent1, fontFace: 'Cambria', objectName: 'Quote mark' });
-  T(s, 'If you could get each individual to record something for themselves which would help them at the moment of the behaviour and somehow AUTOMATICALLY play it back to them when they began pulling, I think it would stop them.', { x: 6.05, y: 2.45, w: 6.25, h: 2.55, fontSize: 21, italic: true, color: C.text1, fontFace: 'Cambria', objectName: 'Practitioner quote' });
-  T(s, 'Practitioner with 30+ years of experience supporting people with trichotillomania', { x: 6.05, y: 5.15, w: 6.25, h: 0.55, fontSize: 14, bold: true, color: C.text2, objectName: 'Quote attribution' });
-  T(s, [{ text: 'Habit-reversal therapy works, and its first step is awareness. ', options: { bold: true } }, { text: 'But automatic pulling skips that step, and therapy is weekly while urges are not.' }], { x: 0.6, y: 6.42, w: 12.1, h: 0.45, fontSize: 15, color: C.text1, objectName: 'Gap line' });
+  s.addText('Help arrives too late', { placeholder: 'title' });
+  T(s, 'THE PROBLEM', { x: 0.6, y: 1.45, w: 4, h: 0.3, fontSize: 12, bold: true, color: C.accent1, charSpacing: 2, objectName: 'Problem label' });
+  const stats = [
+    [md.MdGroups, '1.7%', 'of adults live with it', HEX.soft, HEX.accent, HEX.ink, HEX.white, HEX.accent],
+    [md.MdSchool, '17.7 yrs', 'average age it begins', HEX.pale, HEX.strong, HEX.ink, HEX.white, HEX.strong],
+    [md.MdWork, '1 in 4', 'people with trich say it disrupts work daily', HEX.accent, HEX.white, HEX.soft, HEX.soft, HEX.accent],
+  ];
+  for (let i = 0; i < 3; i++) {
+    const [Comp, n, c, fill, nc, cc, dfill, ic] = stats[i]; const x = 0.6 + i * 4.1;
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y: 1.85, w: 3.9, h: 1.75, rectRadius: 0.2, fill: { color: fill }, line: { type: 'none' }, objectName: `Stat ${i + 1} block` });
+    await disc(s, x + 0.3, 2.3, 0.85, Comp, dfill, ic, `Stat ${i + 1}`);
+    T(s, n, { x: x + 1.4, y: 1.98, w: 2.4, h: 0.85, fontSize: 44, bold: true, color: nc, valign: 'middle', objectName: `Stat ${i + 1}` });
+    T(s, c, { x: x + 1.4, y: 2.83, w: 2.4, h: 0.65, fontSize: 15, color: cc, objectName: `Stat ${i + 1} caption` });
+  }
+  s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 0.6, y: 3.95, w: 12.1, h: 2.8, rectRadius: 0.2, fill: { color: C.text1 }, line: { type: 'none' }, objectName: 'Quote block' });
+  await disc(s, 6.38, 3.67, 0.55, md.MdArrowDownward, HEX.yellow, HEX.ink, 'Problem to idea');
+  await disc(s, 1.0, 4.5, 1.1, md.MdRecordVoiceOver, HEX.yellow, HEX.ink, 'Voice');
+  T(s, 'AN EXPERT’S IDEA', { x: 2.5, y: 4.3, w: 5, h: 0.3, fontSize: 12, bold: true, color: C.accent3, charSpacing: 2, objectName: 'Idea label' });
+  const hi = { color: HEX.yellow, bold: true };
+  T(s, [
+    { text: '“If you could get each individual to ' }, { text: 'record something for themselves', options: hi },
+    { text: ' which would help them at the moment of the behaviour and somehow ' }, { text: 'AUTOMATICALLY play it back', options: hi },
+    { text: ' to them when they began pulling, I think it would stop them.”' },
+  ], { x: 2.5, y: 4.7, w: 9.85, h: 1.45, fontSize: 20, italic: true, color: C.background1, fontFace: 'Cambria', objectName: 'Practitioner quote' });
+  T(s, '— Practitioner with 30+ years of experience supporting people with trichotillomania', { x: 2.5, y: 6.22, w: 9.85, h: 0.35, fontSize: 14, bold: true, color: C.accent5, objectName: 'Quote attribution' });
+  T(s, 'Sources: Grant et al., Psychiatry Res. 2020 (US adults, n = 10,169); Woods et al., J Clin Psychiatry 2006 (survey of 1,697 people with trichotillomania).', { x: 0.6, y: 6.88, w: 11.5, h: 0.25, fontSize: 10, color: C.accent6, objectName: 'Sources' });
   s.addNotes(`[~40 s]
-"Trichotillomania affects about 1.7 percent of adults. It typically begins around seventeen, just as people arrive at university, and one in four say it interferes with their work every day. The best-evidenced treatment, habit reversal training, starts with awareness. But much pulling is automatic: it happens while you read or study, and you only notice afterwards. Therapy is weekly. Urges are not. A practitioner with more than thirty years of experience wrote to us — [read the quote slowly]. That is what we had already begun to build."
+"Trichotillomania affects about 1.7 percent of adults. It typically begins around seventeen, just as people arrive at university, and one in four people with it say it interferes with their work every day. The best-evidenced treatment, habit reversal training, starts with awareness. But much pulling is automatic: it happens while you read or study, and you only notice afterwards. Therapy is weekly. Urges are not. A practitioner with more than thirty years of experience wrote to us — [read the quote slowly; the yellow phrases are exactly what we built]. That is what we had already begun to build."
 
 Evidence: prevalence 1.7%, mean onset 17.7 y (Grant et al. 2020, PMC7212053). 23% daily interference with job duties (Trichotillomania Impact Project, Woods et al. 2006). HRT effect: meta-analysis of 24 RCTs, large benefit vs control (PMC12854921).
 The quotation is one expert's opinion and an intervention idea, not evidence of effectiveness. Do not name or describe the practitioner beyond the attribution; this is early interest, not a partnership.`);
@@ -98,7 +110,7 @@ The quotation is one expert's opinion and an intervention idea, not evidence of 
   pres.addSection({ title: 'Solution' });
   s = pres.addSlide({ masterName: 'TF_LIGHT_TITLE', sectionTitle: 'Solution' });
   s.addText('Meet TrichFree', { placeholder: 'title' });
-  T(s, 'A browser extension that uses the webcam you already have. When your hand moves, support responds.', { x: 0.6, y: 1.2, w: 12.1, h: 0.4, fontSize: 16, italic: true, color: C.text2, objectName: 'Subtitle' });
+  T(s, 'A browser extension that uses the webcam you already have.', { x: 0.6, y: 1.2, w: 12.1, h: 0.4, fontSize: 16, italic: true, color: C.text2, objectName: 'Subtitle' });
   s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 0.6, y: 1.8, w: 5.0, h: 5.0, rectRadius: 0.2, fill: { color: C.text1 }, line: { type: 'none' }, objectName: 'Sees panel' });
   T(s, 'WHAT TRICHFREE SEES', { x: 0.85, y: 1.98, w: 4.5, h: 0.3, fontSize: 12, bold: true, color: C.accent3, charSpacing: 2, objectName: 'Sees label' });
   s.addImage({ path: A('pipeline_c.png'), x: 0.85, y: 2.38, w: 2.95, h: 2.95, altText: 'Detector view: 21 hand landmarks pinching inside the crown zone, with hairline, sides, brow and lash zones drawn relative to the face', objectName: 'Pipeline view' });
@@ -110,16 +122,16 @@ The quotation is one expert's opinion and an intervention idea, not evidence of 
   ], { x: 0.85, y: 5.5, w: 4.55, h: 1.15, fontSize: 12, objectName: 'Sees caption' });
 
   const steps = [
-    ['Notice', 'Finds a pinch in the areas you choose, including a lock held beside the face. A 0.8–1.5 s pause keeps brief touches quiet.', 'zones.png', 3.45, 1.385],
-    ['Hear yourself', 'A soft chime, then a line you recorded: “Hey, it’s me. Your hand is up there.”', 'voice1.png', 1.28, 1.39],
-    ['Stay in control', 'Your voice, a chime, a visual cue or off. Video never leaves the laptop; voice clips are never uploaded.', 'remind.png', 3.45, 1.07],
+    ['Notice', 'Spots a pinch in your chosen areas, even a lock beside the face. A short pause ignores brief touches.', 'zones.png', 3.45, 1.385],
+    ['Hear yourself', 'A soft chime, then your own line: “Hey, it’s me. Your hand is up there.”', 'voice1.png', 1.28, 1.39],
+    ['Stay in control', 'Voice, chime, visual cue or off. Video never leaves the laptop.', 'remind.png', 3.45, 1.07],
   ];
   steps.forEach(([title, body, img, iw, ih], i) => {
     const y = 1.8 + i * 1.7;
     s.addShape(pres.shapes.OVAL, { x: 5.95, y: y + 0.05, w: 0.48, h: 0.48, fill: { color: C.accent1 }, line: { type: 'none' }, objectName: `Step ${i + 1} badge` });
     T(s, String(i + 1), { x: 5.95, y: y + 0.05, w: 0.48, h: 0.48, fontSize: 18, bold: true, color: C.background1, align: 'center', valign: 'middle', objectName: `Step ${i + 1} number` });
     T(s, title, { x: 6.6, y: y + 0.05, w: 2.7, h: 0.45, fontSize: 19, bold: true, color: C.text1, objectName: `Step ${i + 1} title` });
-    T(s, body, { x: 6.6, y: y + 0.52, w: 2.75, h: 1.05, fontSize: 13, color: C.accent6, objectName: `Step ${i + 1} text` });
+    T(s, body, { x: 6.6, y: y + 0.52, w: 2.55, h: 1.1, fontSize: 14, color: C.accent6, objectName: `Step ${i + 1} text` });
     s.addImage({ path: A(img), x: 12.75 - iw, y: y + (1.45 - ih) / 2, w: iw, h: ih, altText: `Screenshot: ${title}`, objectName: `Step ${i + 1} screenshot` });
   });
   s.addNotes(`[~50 s] Point at the left panel first, then walk down the three steps.
@@ -135,7 +147,7 @@ Option: replace the left panel with a 10-second live demo clip recorded on a rea
   T(s, 'Competitive Positioning', { x: 0.55, y: 0.6, w: 3.5, h: 1.5, fontSize: 36, bold: true, color: C.background1, fontFace: '+mj-lt', objectName: 'Title' });
   T(s, 'Where support meets the moment', { x: 0.55, y: 2.15, w: 3.5, h: 0.4, fontSize: 16, color: C.accent4, objectName: 'Subtitle' });
   T(s, [
-    { text: 'TrichFree is the only option that is both ' }, { text: 'in the moment', options: { bold: true } }, { text: ' and ' }, { text: 'personal', options: { bold: true } }, { text: ', on the webcam students already own.' },
+    { text: 'TrichFree is the only option here that is both ' }, { text: 'in the moment', options: { bold: true } }, { text: ' and ' }, { text: 'personal', options: { bold: true } }, { text: ', on the webcam users already own.' },
   ], { x: 0.55, y: 2.85, w: 3.45, h: 2.0, fontSize: 19, color: C.background1, objectName: 'Positioning statement' });
   T(s, 'Bubble size = cost to the user', { x: 0.55, y: 5.35, w: 3.4, h: 0.3, fontSize: 12, color: C.accent4, objectName: 'Legend label' });
   [[0.25, 0.85], [0.42, 1.95], [0.62, 3.15]].forEach(([d, x], i) => s.addShape(pres.shapes.OVAL, { x, y: 5.95 - d / 2 + 0.3, w: d, h: d, fill: { color: C.accent4 }, line: { type: 'none' }, objectName: `Legend ${i}` }));
@@ -160,7 +172,7 @@ Option: replace the left panel with a 10-second live demo clip recorded on a rea
     s.addShape(pres.shapes.OVAL, { x: x - d / 2, y: y - d / 2, w: d, h: d, fill: { color: C.background1 }, line: { color: C.accent5, width: 1.5 }, objectName: name + ' bubble' });
     const p = d * 0.55;
     s.addImage({ data: await icon(Comp, HEX.accent), x: x - p / 2, y: y - p / 2, w: p, h: p, altText: name, objectName: name + ' icon' });
-    T(s, [{ text: name, options: { bold: true, breakLine: true } }, { text: sub, options: { color: HEX.muted } }], { x: x - 1.3, y: y + d / 2 + 0.06, w: 2.6, h: 0.6, fontSize: 12, color: C.text1, align: 'center', objectName: name + ' label' });
+    T(s, [{ text: name, options: { bold: true, breakLine: true } }, { text: sub, options: { color: HEX.muted } }], { x: x - 1.3, y: y + d / 2 + 0.14, w: 2.6, h: 0.6, fontSize: 12, color: C.text1, align: 'center', objectName: name + ' label' });
   }
   const tx = 11.1, ty = 1.75, td = 0.95;
   ring(s, tx - td / 2 - 0.13, ty - td / 2 - 0.13, td + 0.26, 'TrichFree ring');
@@ -212,7 +224,7 @@ Evidence (claude/release-audit branch):
   s.addText('Support should not be a privilege', { placeholder: 'title' });
   T(s, 'WHO WE CAN REACH', { x: 0.6, y: 1.45, w: 5.6, h: 0.3, fontSize: 12, bold: true, color: C.accent1, charSpacing: 2, objectName: 'Funnel label' });
   const funnel = [
-    ['~1 in 60 adults', 'live with trichotillomania worldwide', 5.6, HEX.soft, C.text1],
+    ['~1 in 60 adults', 'live with trichotillomania (US study)', 5.6, HEX.soft, C.text1],
     ['~80,000 in Singapore', 'adults, estimated from 1.7%', 4.6, HEX.lilac, C.text1],
     ['~680 at NUS', 'students: our beachhead, estimated', 3.6, HEX.accent, C.background1],
   ];
@@ -228,7 +240,7 @@ Evidence (claude/release-audit branch):
 
   const tiers = [
     [md.MdPerson, 'Individuals', 'Free', 'Core detection and own-voice reminders. No device to buy: a wearable costs ~US$150+, a webcam is already there.', HEX.green],
-    [md.MdSchool, 'Institutions', 'Paid licence · hypothesis', 'University wellbeing services and BFRB organisations offer supported access to their communities. Willingness to pay is untested: we test it in Stage 3.', HEX.accent],
+    [md.MdSchool, 'Institutions', 'Paid licence · hypothesis', 'Wellbeing services and BFRB organisations buy supported access, e.g. an annual per-student licence. Price and willingness to pay: tested in Stage 3.', HEX.accent],
     [md.MdPsychology, 'Practitioners', 'Long-term · not built', 'A between-session tool clients choose to use, with consent-based sharing. The same hand-to-face engine could later support other BFRBs.', HEX.muted],
   ];
   for (let i = 0; i < tiers.length; i++) {
@@ -256,10 +268,10 @@ Assumptions: Singapore ~80k = 1.7% × ~4.8M adults (rough); NUS ~680 = 1.7% × ~
   s.addText('Every step earns the next', { placeholder: 'title' });
   const base = 6.55;
   const stairs = [
-    ['Validate', 'Nov–Dec 2026', 'Label our 100+ trials; observe 3–5 first-time users', 'Sensitivity · false alerts per hour', 'Technical & research mentors', 2.7, HEX.soft, 'ink'],
-    ['Pilot', 'Q1 2027', 'Ethics-reviewed 14-day pilot: 3-day baseline, then chime vs own voice', 'Helpfulness · acceptability · hand-down rate', 'Ethics guidance · participant costs', 3.1, HEX.pale, 'ink'],
-    ['Distribute', 'Q2 2027', 'Trials with NUS wellbeing services and BFRB communities', '14-day retention · partner interest', 'Introductions · business mentorship', 3.5, HEX.mid, 'white'],
-    ['Personalise', 'H2 2027 →', 'Practitioner-informed features; consent-based sharing', 'Partner uptake · zero privacy incidents', 'Clinical mentorship · funding', 3.9, HEX.strong, 'white'],
+    ['Validate', 'Months 1–2', 'Label our 100+ trials; observe 3–5 first-time users', 'Sensitivity · false alerts per hour', 'Technical & research mentors', 2.7, HEX.soft, 'ink'],
+    ['Pilot', 'Months 3–5', 'Ethics-reviewed 14-day pilot: 3-day baseline, then chime vs own voice', 'Helpfulness · acceptability · hand-down rate', 'Ethics guidance · participant costs', 3.1, HEX.pale, 'ink'],
+    ['Distribute', 'Months 6–9', 'Trials with NUS wellbeing services and BFRB communities', '14-day retention · partner interest', 'Introductions · business mentorship', 3.5, HEX.mid, 'white'],
+    ['Personalise', 'Month 10 →', 'Practitioner-informed features; consent-based sharing', 'Partner uptake · zero privacy incidents', 'Clinical mentorship · funding', 3.9, HEX.strong, 'white'],
   ];
   stairs.forEach(([title, when, act, metric, nusc, h, fill, tone], i) => {
     const x = 0.6 + i * 3.05, w = 2.95, y = base - h;
@@ -272,44 +284,45 @@ Assumptions: Singapore ~80k = 1.7% × ~4.8M adults (rough); NUS ~680 = 1.7% × ~
     T(s, [{ text: 'Measure: ', options: { bold: true } }, { text: metric }], { x: x + 0.2, y: base - 0.62, w: w - 0.4, h: 0.5, fontSize: 11, italic: true, color: fg, valign: 'bottom', objectName: `Stair ${i + 1} metric` });
     T(s, [{ text: 'NUSC: ', options: { bold: true } }, { text: nusc }], { x: x + 0.2, y: y + 1.6, w: w - 0.4, h: 0.45, fontSize: 11, color: sub, objectName: `Stair ${i + 1} nusc` });
   });
+  T(s, 'Goal: in-the-moment support any student can access, free.', { x: 0.6 + 3 * 3.05 + 0.2, y: base - 3.9 + 2.25, w: 2.55, h: 0.75, fontSize: 13, bold: true, italic: true, color: C.accent3, objectName: 'Stage 4 goal' });
   s.addImage({ path: A('mochi.png'), x: 1.55, y: base - 2.7 - 1.05, w: 1.05, h: 1.05, altText: 'Mochi standing on the first step', objectName: 'Mochi' });
   await disc(s, 0.6 + 3 * 3.05 + 1.05, base - 3.9 - 1.0, 0.85, md.MdFlag, HEX.yellow, HEX.ink, 'Impact flag');
-  T(s, 'Engagement is not clinical effectiveness: we measure them separately. Dates are targets.', { x: 0.6, y: 6.75, w: 9, h: 0.25, fontSize: 11, italic: true, color: C.accent6, objectName: 'Footnote' });
+  T(s, 'Engagement is not clinical effectiveness: we measure them separately. Timings are targets from the start of incubation.', { x: 0.6, y: 6.75, w: 9, h: 0.25, fontSize: 11, italic: true, color: C.accent6, objectName: 'Footnote' });
   s.addNotes(`[~38 s]
 "We'll climb one step at a time. First, label our hundred-plus founder trials and test with new users, to measure real accuracy. Second, an ethics-reviewed fourteen-day pilot, already built into the extension, comparing a chime with your own voice. Third, distribution trials with institutions. Fourth, practitioner-informed personalisation. Every step has a metric, and we never confuse engagement with clinical effect."
 
 Pilot mode exists in code (src/core/arms.ts): days 1–3 silent baseline; days 4–14 randomise each episode to CHIME or VOICE in permuted blocks of 4 seeded per participant; outcome = hand down within 10 s. The release audit (docs/INDEPENDENT_RELEASE_AUDIT.md) says 'no-go yet' for a real-user pilot until its listed actions are done; ethics review is required first.
-Dates are the team's targets. Adjust them to the incubation timeline in the Info Kit.`);
+Timings are months from the start of incubation; adjust them to the Info Kit timeline.`);
 
   // ---------------- 8. Team, ask, vision ----------------
   pres.addSection({ title: 'Ask' });
   s = pres.addSlide({ masterName: 'TF_DARK', sectionTitle: 'Ask' });
   T(s, 'Let’s ease suffering, one quiet moment at a time', { x: 0.6, y: 0.45, w: 12.1, h: 0.9, fontSize: 36, bold: true, color: C.background1, fontFace: '+mj-lt', valign: 'middle', objectName: 'Headline' });
-  const founders = [['[Founder 1 name]', 'Robotics & engineering: built the computer-vision pipeline'], ['[Founder 2 name]', 'Statistics: designed the evaluation and randomised pilot']];
-  founders.forEach(([n, r], i) => {
+  const founders = [['Tang Caoyu', 'Robotics & Machine Intelligence: built the computer-vision pipeline', 'founder1.png'], ['Zhang Xinyi', 'Statistics: designed the evaluation and randomised pilot', 'founder2.png']];
+  founders.forEach(([n, r, img], i) => {
     const y = 1.7 + i * 1.5;
     s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 0.6, y, w: 5.6, h: 1.32, rectRadius: 0.18, fill: { color: HEX.night }, line: { type: 'none' }, objectName: `Founder ${i + 1} card` });
-    s.addShape(pres.shapes.OVAL, { x: 0.85, y: y + 0.2, w: 0.92, h: 0.92, fill: { color: C.accent1 }, line: { type: 'none' }, objectName: `Founder ${i + 1} photo placeholder` });
-    T(s, 'photo', { x: 0.85, y: y + 0.2, w: 0.92, h: 0.92, fontSize: 11, color: C.accent4, align: 'center', valign: 'middle', objectName: `Founder ${i + 1} photo label` });
+    s.addImage({ path: A(img), x: 0.85, y: y + 0.2, w: 0.92, h: 0.92, altText: `Photo of ${n}`, objectName: `Founder ${i + 1} photo` });
     T(s, [{ text: n, options: { bold: true, fontSize: 18, color: C.background1, breakLine: true } }, { text: r, options: { fontSize: 14, color: HEX.pale } }], { x: 2.0, y: y + 0.2, w: 4.05, h: 0.95, objectName: `Founder ${i + 1} text` });
   });
-  T(s, 'We kept building through hackathon setbacks. When our first user test failed, we fixed it within days.', { x: 0.6, y: 4.8, w: 5.6, h: 0.7, fontSize: 14, italic: true, color: C.accent4, objectName: 'Grit line' });
+  T(s, 'We kept building through hackathon setbacks. When our first user test failed, we shipped a fix within days.', { x: 0.6, y: 4.8, w: 5.6, h: 0.7, fontSize: 14, italic: true, color: C.accent4, objectName: 'Grit line' });
 
-  T(s, 'Why incubation, not just more time', { x: 6.8, y: 1.7, w: 5.9, h: 0.4, fontSize: 18, bold: true, color: C.accent3, objectName: 'Ask head' });
+  T(s, 'Why NUSC incubation, not just more time', { x: 6.8, y: 1.7, w: 5.9, h: 0.4, fontSize: 18, bold: true, color: C.accent3, objectName: 'Ask head' });
   T(s, 'We can build the software. We can’t yet run an ethical study, reach institutional buyers or form clinical partnerships alone.', { x: 6.8, y: 2.15, w: 5.9, h: 0.8, fontSize: 14, color: C.background1, objectName: 'Ask body' });
   const asks = [[md.MdPsychology, 'Clinical & research mentorship'], [md.MdScience, 'Ethics-reviewed pilot design'], [md.MdGroups, 'Access to student users'], [md.MdSavings, 'Business-model & willingness-to-pay testing'], [md.MdHub, 'Introductions to wellbeing & BFRB organisations']];
   for (let i = 0; i < asks.length; i++) {
-    const y = 3.1 + i * 0.5;
+    const y = 3.0 + i * 0.42;
     await disc(s, 6.8, y, 0.38, asks[i][0], HEX.accent, HEX.white, `Ask ${i + 1}`);
     T(s, asks[i][1], { x: 7.35, y, w: 5.3, h: 0.38, fontSize: 15, color: C.background1, valign: 'middle', objectName: `Ask ${i + 1} text` });
   }
+  T(s, [{ text: 'Funding would cover: ', options: { bold: true, color: C.accent3 } }, { text: 'pilot participant costs · testing on diverse real laptops · external security review · hosting', options: { color: C.accent4 } }], { x: 6.8, y: 5.12, w: 5.9, h: 0.55, fontSize: 12, objectName: 'Funding line' });
   s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 0.6, y: 5.75, w: 12.1, h: 1.05, rectRadius: 0.2, fill: { color: HEX.night }, line: { type: 'none' }, objectName: 'Closing panel' });
   T(s, 'Tonight at 11:42, someone’s hand will drift to their hair. We want the next thing they hear to be their own voice: “It’s okay. I’ve got you.”', { x: 0.9, y: 5.75, w: 10.3, h: 1.05, fontSize: 19, italic: true, color: C.accent4, valign: 'middle', fontFace: 'Cambria', objectName: 'Closing line' });
   s.addImage({ path: A('mochi.png'), x: 11.45, y: 5.72, w: 1.1, h: 1.1, altText: 'Mochi waving', objectName: 'Mochi' });
   s.addNotes(`[~40 s]
-"We're [names]: an engineer who built the vision pipeline, and a statistician who designed the evaluation. We kept going through hackathon setbacks because this matters to us. We can write the software. What we can't do alone is run an ethical study, reach institutions and build clinical partnerships, and that's what NUSC unlocks. Tonight at 11:42, someone's hand will drift to their hair. We want the next thing they hear to be their own voice, saying: it's okay. I've got you. Thank you."
+"We're Tang Caoyu, who built the vision pipeline, and Zhang Xinyi, who designed the evaluation. We kept going through hackathon setbacks because this matters to us. We can write the software. What we can't do alone is run an ethical study, reach institutions and build clinical partnerships, and that's what NUSC unlocks. Tonight at 11:42, someone's hand will drift to their hair. We want the next thing they hear to be their own voice, saying: it's okay. I've got you. Thank you."
 
-Fill in founder names, photos and one-line backgrounds. If NUSC funding is discussed, name concrete uses, sized from the Info Kit: pilot participant reimbursement and ethics administration; real-laptop testing across skin tones, hairstyles, head coverings and lighting; external security and accessibility review; Chrome Web Store, hosting and the database; structured user interviews.
+If NUSC funding is discussed, name concrete uses, sized from the Info Kit: pilot participant reimbursement and ethics administration; real-laptop testing across skin tones, hairstyles, head coverings and lighting; external security and accessibility review; Chrome Web Store, hosting and the database; structured user interviews.
 Incubation selection and the later funding decision are separate. This slide asks for incubation; funding is framed as what it would unlock at each stage.`);
 
   await pres.writeFile({ fileName: OUT });

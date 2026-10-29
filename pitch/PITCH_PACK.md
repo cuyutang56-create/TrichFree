@@ -5,7 +5,6 @@ Deck: `TrichFree_NUSC_Pitch.pptx` (editable), preview `TrichFree_NUSC_Pitch.pdf`
 The audit below is based on the `claude/release-audit` branch, the most complete version of the product (14 Oct 2026). `main` and this branch hold an older prototype.
 
 **Fill in before presenting:**
-- Founder names, photos and one-line backgrounds (slide 8).
 - Current HabitAware price and NUS enrolment.
 - Funding amounts from the Info Kit.
 
@@ -143,7 +142,7 @@ The deck follows the approved outline. On-slide text, visuals, evidence and tran
 | # | Headline | Time |
 |---|---|---|
 | 1 | It starts before you notice | 25 s |
-| 2 | Help arrives after the moment has passed (with the practitioner quote) | 40 s |
+| 2 | Help arrives too late (3 stat blocks, then the expert's idea) | 40 s |
 | 3 | Meet TrichFree (detector view, hair mask, 3 steps with screenshots) | 50 s |
 | 4 | Competitive Positioning (2×2: after vs in the moment, generic vs personal; bubble = cost) | 32 s |
 | 5 | Built, tested, and ready to be proven (6 large-icon tiles) | 42 s |
@@ -157,7 +156,7 @@ The deck follows the approved outline. On-slide text, visuals, evidence and tran
 
 **1.** Quick question: did you touch your hair in the last five minutes? *(pause)* Most of us honestly don't know, and for most of us it doesn't matter. But for about one in sixty adults, that unnoticed touch is where trichotillomania begins: hair pulling they desperately want to stop, and often don't notice starting. We're TrichFree, and we build support for exactly that moment.
 
-**2.** Trichotillomania affects about 1.7 percent of adults. It typically begins around seventeen, just as people arrive at university, and one in four say it interferes with their work every day. The best-evidenced treatment, habit reversal training, starts with awareness. But much pulling is automatic: it happens while you read or study, and you only notice afterwards. Therapy is weekly. Urges are not. A practitioner with more than thirty years of experience wrote to us: *"If you could get each individual to record something for themselves which would help them at the moment of the behaviour and somehow AUTOMATICALLY play it back to them when they began pulling, I think it would stop them."* That is what we had already begun to build.
+**2.** Trichotillomania affects about 1.7 percent of adults. It typically begins around seventeen, just as people arrive at university, and one in four people with it say it interferes with their work every day. The best-evidenced treatment, habit reversal training, starts with awareness. But much pulling is automatic: it happens while you read or study, and you only notice afterwards. Therapy is weekly. Urges are not. A practitioner with more than thirty years of experience wrote to us: *"If you could get each individual to record something for themselves which would help them at the moment of the behaviour and somehow AUTOMATICALLY play it back to them when they began pulling, I think it would stop them."* That is what we had already begun to build.
 
 **3.** This is TrichFree: a browser extension that uses the webcam already on your laptop. On the left is what it sees: twenty-one points on your hand, your face as a reference frame, and a hair-segmentation model that knows where your hair is, even a lock held beside your face. You choose your areas: crown, hairline, temples, strands, brows, lashes. When your fingers pinch there for about a second, it doesn't buzz at you. It plays a soft chime, then your own voice: "Hey, it's me. Your hand is up there." Everything runs on the laptop. Video is never stored or sent.
 
@@ -169,7 +168,7 @@ The deck follows the approved outline. On-slide text, visuals, evidence and tran
 
 **7.** We'll climb one step at a time. First, label our hundred-plus founder trials and test with new users, to measure real accuracy. Second, an ethics-reviewed fourteen-day pilot, already built into the extension, comparing a chime with your own voice. Third, distribution trials with institutions. Fourth, practitioner-informed personalisation. Every step has a metric, and we never confuse engagement with clinical effect.
 
-**8.** We're [names]: an engineer who built the vision pipeline, and a statistician who designed the evaluation. We kept going through hackathon setbacks because this matters to us. We can write the software. What we can't do alone is run an ethical study, reach institutions and build clinical partnerships, and that's what NUSC unlocks. Tonight at 11:42, someone's hand will drift to their hair. We want the next thing they hear to be their own voice, saying: it's okay. I've got you. Thank you.
+**8.** We're Tang Caoyu, who built the vision pipeline, and Zhang Xinyi, who designed the evaluation. We kept going through hackathon setbacks because this matters to us. We can write the software. What we can't do alone is run an ethical study, reach institutions and build clinical partnerships, and that's what NUSC unlocks. Tonight at 11:42, someone's hand will drift to their hair. We want the next thing they hear to be their own voice, saying: it's okay. I've got you. Thank you.
 
 **Delivery tips:**
 - Rehearse with a timer; slide 3 is where people run long.
@@ -256,7 +255,7 @@ The PDF preview was rendered with LibreOffice, so fonts may differ slightly from
 12. **Are you committed beyond this competition?**
     - We kept building after hackathon setbacks and shipped a hair-aware fix within days of a failed user test.
     - The product is built to production standards: 283 automated tests and a security audit.
-    - Our plan runs well past the incubation period. [Founders: add personal commitment details.]
+    - Our plan runs well past the incubation period.
 13. **How do you scale?**
     - NUS first, then other Singapore universities, then BFRB communities worldwide. These are English-speaking, desk-based students and workers.
     - Distribution through institutions and BFRB organisations, not paid ads.
