@@ -8,3 +8,7 @@ public/mediapipe/models
 test-results
 playwright-report
 .DS_Store
+
+# Final pitch deck contains founder photos; kept local (repo is public)
+pitch/TrichFree_NUSC_Pitch_Final.pptx
+pitch/TrichFree_NUSC_Pitch_Final.pdf
