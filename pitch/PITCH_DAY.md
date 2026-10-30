@@ -2,7 +2,8 @@
 
 **Friday 30 October 2026, 3:00–3:30pm.** About 5 minutes of pitch, then 20 minutes of Q&A. Arrive by 2:50pm.
 
-- **Speakers:** **XY** = Zhang Xinyi (statistics, evaluation, business), **CY** = Tang Caoyu (robotics and machine intelligence, product, tech).
+- **Pitch:** Tang Caoyu presents all 8 slides.
+- **Q&A:** both answer. **CY** = Tang Caoyu (robotics and machine intelligence, product, tech); **XY** = Zhang Xinyi (statistics, evaluation, business).
 - **Clicks:** `[CLICK]` means advance the slide.
 
 ---
@@ -34,22 +35,24 @@
 
 ---
 
-## 2. The 5-minute pitch (about 650 words)
+## 2. The 5-minute pitch (Caoyu presents alone, about 620 words)
 
-Pace: slow and warm. Pause where marked. Look at the judges, not the screen.
+Pace: slow and warm. Pause where marked. Look at the judges, not the screen. Xinyi stands beside Caoyu and joins for Q&A.
 
-### Slide 1: It starts before you notice (XY, about 25 s)
-> *(Stand still. Wait two seconds before speaking.)*
+### Slide 1: The hook (about 30 s)
+> *(Stand still. Look at the panel. Wait two seconds.)*
 >
-> Quick question. Did you touch your hair in the last five minutes?
+> Do you have a little habit that you repeat, but just can't get rid of?
 >
-> *(pause)*
+> *(pause for 2–3 seconds and let them think; a few may smile or nod)*
 >
-> Most of us honestly don't know, and for most of us it doesn't matter. But for about one in sixty adults, that unnoticed touch is where trichotillomania begins: hair pulling they desperately want to stop, and often don't notice starting.
+> Biting your nails. Clicking your pen. Touching your hair. Most of the time, you don't even notice you're doing it.
 >
-> We're TrichFree, and we build support for exactly that moment. `[CLICK]`
+> But for about one in sixty adults, it's more than a habit. It's pulling out their own hair. It's called trichotillomania. They desperately want to stop, and it often starts before they notice.
+>
+> I'm Caoyu, from TrichFree, and we build support for exactly that moment. `[CLICK]`
 
-### Slide 2: Help arrives too late (XY, about 40 s)
+### Slide 2: Help arrives too late (about 40 s)
 > Trichotillomania affects about 1.7 percent of adults. It usually begins around seventeen, right as people arrive at university. And one in four people with it say it disrupts their work every day.
 >
 > The best-evidenced treatment, habit reversal therapy, starts with *awareness*. But much pulling is automatic. It happens while you're reading or studying, and you only notice afterwards. Therapy is weekly. Urges are not.
@@ -60,7 +63,7 @@ Pace: slow and warm. Pause where marked. Look at the judges, not the screen.
 >
 > *(pause)* That is exactly what we had already started building. `[CLICK]`
 
-### Slide 3: Meet TrichFree (CY, about 50 s)
+### Slide 3: Meet TrichFree (about 50 s)
 > This is TrichFree, a browser extension that works with the webcam already on your laptop.
 >
 > *(point left)* This is what it sees: twenty-one points on your hand, your face as a reference frame, and a hair-segmentation model that knows where your hair is, even a lock held beside your face.
@@ -69,21 +72,21 @@ Pace: slow and warm. Pause where marked. Look at the judges, not the screen.
 >
 > And everything runs on your laptop. Video is never stored, and never sent anywhere. `[CLICK]`
 
-### Slide 4: Competitive positioning (CY, about 30 s)
+### Slide 4: Competitive positioning (about 30 s)
 > Here's the landscape. Tracking apps and timers work *after* the moment. Wearables catch the moment, but with a generic buzz, and cost around a hundred and fifty US dollars. Therapy is deeply personal, but it lives between sessions.
 >
 > TrichFree is the only option here that's both in the moment *and* personal, on hardware people already own.
 >
 > To be honest about our limits: it only works at a desk, and we haven't measured real-world accuracy yet. `[CLICK]`
 
-### Slide 5: Built, tested, ready to be proven (CY, about 40 s)
+### Slide 5: Built, tested, ready to be proven (about 40 s)
 > And it's real. We have a working extension and website, and 283 automated tests.
 >
 > We built an evaluation harness that runs our real detector on simulated movements, including slow, noisy cameras. It caught 350 of 350 simulated reaches, with zero false alerts on drinking or resting your chin. That's synthetic data, not real-world accuracy. Measuring that is our next step.
 >
 > Our first real-user test actually *failed*. It missed a strand pulled beside the face. Within days we'd added hair segmentation. That's how we work: we listen, and we fix. `[CLICK]`
 
-### Slide 6: Support should not be a privilege (XY, about 40 s)
+### Slide 6: Support should not be a privilege (about 40 s)
 > Support shouldn't depend on what you can afford.
 >
 > So individuals get the core tool free. And that's sustainable, because all the AI runs on the user's own laptop: no cloud GPUs, no video storage. Each extra user costs us almost nothing.
@@ -94,7 +97,7 @@ Pace: slow and warm. Pause where marked. Look at the judges, not the screen.
 >
 > Whether institutions will pay is our biggest open question, and testing it properly is exactly why we need business mentorship. `[CLICK]`
 
-### Slide 7: Every step earns the next (XY, about 35 s)
+### Slide 7: Every step earns the next (about 35 s)
 > So we'll climb one step at a time.
 >
 > First, label our hundred-plus founder trials and test with new users, to measure real accuracy.
@@ -105,14 +108,12 @@ Pace: slow and warm. Pause where marked. Look at the judges, not the screen.
 >
 > Every step has a metric, and we will never confuse engagement with clinical effect. `[CLICK]`
 
-### Slide 8: Team, ask, vision (CY, then XY, about 40 s)
-> **CY:** I'm Caoyu. I built the computer-vision pipeline.
+### Slide 8: Team, ask, vision (about 40 s)
+> I built the computer-vision pipeline, and my teammate Zhang Xinyi *(gesture to Xinyi)* designed our evaluation and the randomised pilot.
 >
-> **XY:** And I'm Xinyi. I designed the evaluation and the randomised pilot.
+> We kept going through hackathon setbacks because this matters to us. We can write the software. What we can't do alone is run an ethical study, reach institutions and build clinical partnerships. That's what NUSC unlocks.
 >
-> **CY:** We kept going through hackathon setbacks because this matters to us. We can write the software. What we can't do alone is run an ethical study, reach institutions and build clinical partnerships. That's what NUSC unlocks.
->
-> **XY:** *(slowly, warmly)* Tonight at 11:42, someone's hand will drift to their hair. We want the next thing they hear to be their own voice, saying: *it's okay. I've got you.*
+> *(slowly, warmly)* So, back to that little habit you couldn't stop. Tonight at 11:42, someone's hand will drift to their hair. We want the next thing they hear to be their own voice, saying: *it's okay. I've got you.*
 >
 > *(pause)* Thank you.
 
@@ -121,7 +122,12 @@ Pace: slow and warm. Pause where marked. Look at the judges, not the screen.
 - "including slow, noisy cameras" on slide 5
 - the "Third, Fourth" sentence on slide 7
 
-Never cut the quote or the closing line.
+Never cut the opening question, the quote or the closing line.
+
+**Delivery notes for the opening:**
+- Ask the question to the panel directly, and really wait. The silence is the hook.
+- Don't ask them to raise hands; a rhetorical pause is safer with a panel.
+- Say "it's more than a habit" clearly. Trichotillomania is a recognised condition, and the panel should hear that you know the difference.
 
 ---
 
@@ -338,7 +344,7 @@ This sounds stronger than guessing. Never invent a number.
 ## 5. Day-of checklist
 
 - [ ] Slides emailed by Thu 29 Oct, 5pm. Bring a USB stick with the PPTX and PDF as backup.
-- [ ] Rehearse twice with a timer, with clicker handovers (slide 3 → CY, slide 6 → XY, slide 8 → both).
+- [ ] Caoyu rehearses twice with a timer and the clicker; Xinyi times it and plays a tough judge for Q&A.
 - [ ] Arrive by 2:50pm: NUSC Admin Wing, Ground Floor Conference Room.
 - [ ] Optional: the extension running on a laptop for a live demo in Q&A, if the panel asks. Test it first in that room's lighting.
 - [ ] Bring the funding numbers from the Info Kit (question C8).
